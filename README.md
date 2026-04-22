@@ -104,9 +104,3 @@ chmod +x "Play It All.AppImage"
 The Electron app checks GitHub Releases automatically shortly after launch and
 again every six hours. You can also open `Settings > Updates` and click `Check`.
 
-When an update is downloaded, the app will show a restart option. The changelog
-shown in the app comes from the GitHub Release notes.
-<<<<<<< HEAD
-=======
-
->>>>>>> 3f82e01 (Update release.yml and RELEASE.md)
