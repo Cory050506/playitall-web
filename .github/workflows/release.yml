@@ -9,9 +9,22 @@ permissions:
   contents: write
 
 jobs:
-  mac:
-    name: Build macOS
-    runs-on: macos-latest
+  release:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS
+            os: macos-latest
+            command: npm run release -- --mac
+          - name: Windows
+            os: windows-latest
+            command: npm run release -- --win
+          - name: Linux
+            os: ubuntu-latest
+            command: npm run release -- --linux
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -32,4 +45,4 @@ jobs:
         run: npm run lint
 
       - name: Publish
-        run: npm run release
+        run: ${{ matrix.command }}
