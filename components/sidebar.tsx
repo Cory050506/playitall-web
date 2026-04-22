@@ -9,6 +9,7 @@ import {
   Search,
   Settings,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { GlassPanel } from "@/components/glass/glass-panel";
 import { AppLogo } from "@/components/app-logo";
@@ -94,7 +95,7 @@ export function Sidebar() {
       </GlassPanel>
     </aside>
 
-    <nav className="safe-bottom fixed inset-x-3 bottom-3 z-50 lg:hidden">
+    <nav className="mobile-bottom-nav safe-bottom fixed inset-x-3 z-50 lg:hidden">
       <GlassPanel dark className="rounded-full px-2 py-2">
         <div className="grid grid-cols-4 gap-1">
           {items.map((item) => {
@@ -109,14 +110,23 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-full text-[11px] font-semibold transition-all",
+                  "relative flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-full text-[11px] font-semibold transition-all",
                   active
-                    ? "bg-[var(--accent)] text-white"
+                    ? "mobile-nav-active text-white"
                     : "swift-subtitle hover:bg-[var(--soft-fill-hover)]"
                 )}
               >
-                <Icon size={19} />
-                <span className="truncate">{item.label}</span>
+                {active ? (
+                  <motion.span
+                    layoutId="mobile-nav-pill"
+                    className="absolute inset-0 rounded-full bg-[var(--accent)] shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+                    transition={{ type: "spring", stiffness: 410, damping: 34 }}
+                  />
+                ) : null}
+                <span className="relative z-10 inline-flex flex-col items-center gap-1">
+                  <Icon size={19} />
+                  <span className="truncate">{item.label}</span>
+                </span>
               </Link>
             );
           })}

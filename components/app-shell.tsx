@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main
         className={cn(
-          "min-h-screen pb-[178px] transition-[padding] duration-300 lg:pb-36 lg:pr-4",
+          "min-h-screen pb-[calc(var(--mobile-nav-height)+var(--mini-player-bottom)+2rem)] pt-[calc(3.75rem+env(safe-area-inset-top))] transition-[padding] duration-300 lg:pb-36 lg:pr-4 lg:pt-0",
           sidebarCollapsed ? "lg:pl-[92px]" : "lg:pl-[244px]"
         )}
       >

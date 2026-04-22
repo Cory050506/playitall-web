@@ -5,36 +5,112 @@
   "main": "electron/main.mjs",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npm run prepare:standalone",
+    "prepare:standalone": "node scripts/patch-standalone-server.mjs && mkdir -p .next/standalone/.next && rm -rf .next/standalone/.next/static .next/standalone/public && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public",
     "start": "next start",
     "lint": "eslint",
     "electron": "wait-on http://localhost:3000 && PLAYITALL_DEV_SERVER_URL=http://localhost:3000 electron .",
     "electron:dev": "concurrently -k \"npm run dev\" \"npm run electron\"",
-    "dist": "npm run build && electron-builder"
+    "dist": "npm run build && electron-builder",
+    "dist:mac:dir": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir --mac",
+    "install:mac": "npm run dist:mac:dir && ditto \"dist/mac/Play It All.app\" \"/Applications/Play It All.app\"",
+    "release": "npm run build && electron-builder --publish always"
   },
   "build": {
     "appId": "com.playitall.app",
     "productName": "Play It All",
     "asar": true,
     "files": [
-      "app/**/*",
-      "components/**/*",
       "electron/**/*",
-      "lib/**/*",
-      "stores/**/*",
-      "public/**/*",
-      ".next/**/*",
-      "next.config.ts",
+      ".next/standalone/**/*",
+      "node_modules/argparse/**/*",
+      "node_modules/builder-util-runtime/**/*",
+      "node_modules/debug/**/*",
+      "node_modules/electron-updater/**/*",
+      "node_modules/fs-extra/**/*",
+      "node_modules/graceful-fs/**/*",
+      "node_modules/js-yaml/**/*",
+      "node_modules/jsonfile/**/*",
+      "node_modules/lazy-val/**/*",
+      "node_modules/lodash.escaperegexp/**/*",
+      "node_modules/lodash.isequal/**/*",
+      "node_modules/ms/**/*",
+      "node_modules/sax/**/*",
+      "node_modules/semver/**/*",
+      "node_modules/tiny-typed-emitter/**/*",
+      "node_modules/universalify/**/*",
       "package.json",
-      "node_modules/**/*"
+      "!node_modules/@img/**/*",
+      "!node_modules/@next/**/*",
+      "!node_modules/@radix-ui/**/*",
+      "!node_modules/@swc/**/*",
+      "!node_modules/@tanstack/**/*",
+      "!node_modules/aria-hidden/**/*",
+      "!node_modules/baseline-browser-mapping/**/*",
+      "!node_modules/blueimp-md5/**/*",
+      "!node_modules/caniuse-lite/**/*",
+      "!node_modules/class-variance-authority/**/*",
+      "!node_modules/client-only/**/*",
+      "!node_modules/clsx/**/*",
+      "!node_modules/detect-libc/**/*",
+      "!node_modules/detect-node-es/**/*",
+      "!node_modules/framer-motion/**/*",
+      "!node_modules/get-nonce/**/*",
+      "!node_modules/lucide-react/**/*",
+      "!node_modules/motion-dom/**/*",
+      "!node_modules/motion-utils/**/*",
+      "!node_modules/nanoid/**/*",
+      "!node_modules/next/**/*",
+      "!node_modules/picocolors/**/*",
+      "!node_modules/postcss/**/*",
+      "!node_modules/react/**/*",
+      "!node_modules/react-dom/**/*",
+      "!node_modules/react-remove-scroll/**/*",
+      "!node_modules/react-remove-scroll-bar/**/*",
+      "!node_modules/react-style-singleton/**/*",
+      "!node_modules/scheduler/**/*",
+      "!node_modules/sharp/**/*",
+      "!node_modules/sonner/**/*",
+      "!node_modules/source-map-js/**/*",
+      "!node_modules/styled-jsx/**/*",
+      "!node_modules/tailwind-merge/**/*",
+      "!node_modules/tslib/**/*",
+      "!node_modules/use-callback-ref/**/*",
+      "!node_modules/use-sidecar/**/*",
+      "!node_modules/zustand/**/*"
+    ],
+    "asarUnpack": [
+      ".next/standalone/node_modules/@img/**/*",
+      ".next/standalone/node_modules/@next/swc-*/*",
+      ".next/standalone/node_modules/sharp/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Cory050506",
+        "repo": "playitall-web",
+        "releaseType": "release"
+      }
     ],
     "mac": {
       "icon": "electron/assets/icon.icns",
       "category": "public.app-category.music",
       "target": [
-        "dmg",
-        "zip"
-      ]
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "minimumSystemVersion": "10.13",
+      "hardenedRuntime": false
     },
     "win": {
       "icon": "electron/assets/icon.ico",
@@ -60,6 +136,7 @@
     "blueimp-md5": "^2.19.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-updater": "^6.8.3",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
     "next": "16.2.4",

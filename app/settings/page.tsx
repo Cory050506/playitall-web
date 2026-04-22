@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { GlassPanel } from "@/components/glass/glass-panel";
 import { SettingsRow } from "@/components/ui/settings-row";
 import { ServerSettingsCard } from "@/components/settings/server-settings-card";
+import { AppUpdateCard } from "@/components/settings/app-update-card";
 import { useSessionStore } from "@/stores/session-store";
 
 export default function SettingsPage() {
@@ -35,6 +36,8 @@ export default function SettingsPage() {
           </GlassPanel>
 
           <ServerSettingsCard />
+
+          <AppUpdateCard />
 
           <div>
             <div className="mb-3 text-lg font-semibold text-[var(--foreground)]">About</div>

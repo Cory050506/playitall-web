@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { usePreferencesStore } from "@/stores/preferences-store";
 import { useCoverArtUrl } from "@/lib/subsonic/use-cover-art";
@@ -18,9 +19,6 @@ type AudioContextWindow = Window &
 
 type CastableAudioElement = HTMLAudioElement & {
   webkitShowPlaybackTargetPicker?: () => void;
-  remote?: {
-    prompt?: () => Promise<void>;
-  };
   disableRemotePlayback?: boolean;
 };
 
@@ -41,6 +39,10 @@ type CastMediaInfo = {
   duration?: number;
 };
 
+type CastLoadRequest = {
+  currentTime?: number;
+};
+
 type CastMediaNamespace = {
   DEFAULT_MEDIA_RECEIVER_APP_ID?: string;
   MetadataType?: {
@@ -48,7 +50,7 @@ type CastMediaNamespace = {
   };
   MusicTrackMediaMetadata?: new () => CastMusicMetadata;
   MediaInfo?: new (contentId: string, contentType: string) => CastMediaInfo;
-  LoadRequest?: new (mediaInfo: CastMediaInfo) => unknown;
+  LoadRequest?: new (mediaInfo: CastMediaInfo) => CastLoadRequest;
 };
 
 type CastSession = {
@@ -75,6 +77,54 @@ type CastGlobals = typeof globalThis & {
   };
 };
 
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function getGoogleCastSupport(timeoutMs = 2500) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const globals = globalThis as CastGlobals;
+    const castContext = globals.cast?.framework?.CastContext?.getInstance();
+    const mediaNamespace = globals.chrome?.cast?.media;
+    const MediaInfo = mediaNamespace?.MediaInfo;
+    const LoadRequest = mediaNamespace?.LoadRequest;
+
+    if (castContext && mediaNamespace && MediaInfo && LoadRequest) {
+      return { castContext, mediaNamespace, MediaInfo, LoadRequest };
+    }
+
+    await sleep(100);
+  }
+
+  return null;
+}
+
+function isLocalhostUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function isSafariAirPlayAvailable(audio: CastableAudioElement) {
+  return typeof audio.webkitShowPlaybackTargetPicker === "function";
+}
+
+function setMediaSessionAction(
+  action: MediaSessionAction,
+  handler: MediaSessionActionHandler
+) {
+  try {
+    navigator.mediaSession.setActionHandler(action, handler);
+  } catch {
+    // Some Chromium builds expose Media Session but not every action.
+  }
+}
+
 export function AudioEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -93,6 +143,46 @@ export function AudioEngine() {
   const streamUrl = useStreamUrl(currentSong?.id);
   const directStreamUrl = useDirectStreamUrl(currentSong?.id);
   const castCoverArtUrl = useCoverArtUrl(currentSong?.coverArt, 800);
+
+  useEffect(() => {
+    if (!currentSong) {
+      document.title = "Play It All";
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = null;
+      }
+      return;
+    }
+
+    const artist = currentSong.artist || "Unknown Artist";
+    const title = `${currentSong.title} - ${artist}`;
+    document.title = title;
+
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.title,
+        artist,
+        album: currentSong.album || undefined,
+        artwork: castCoverArtUrl
+          ? [
+              { src: castCoverArtUrl, sizes: "512x512", type: "image/png" },
+            ]
+          : undefined,
+      });
+
+      setMediaSessionAction("play", () => {
+        usePlaybackStore.getState().play();
+      });
+      setMediaSessionAction("pause", () => {
+        usePlaybackStore.getState().pause();
+      });
+      setMediaSessionAction("previoustrack", () => {
+        usePlaybackStore.getState().previous();
+      });
+      setMediaSessionAction("nexttrack", () => {
+        usePlaybackStore.getState().next();
+      });
+    }
+  }, [castCoverArtUrl, currentSong]);
 
   const ensureEqualizerGraph = useCallback((audio: HTMLAudioElement) => {
     if (typeof window === "undefined") return null;
@@ -172,25 +262,34 @@ export function AudioEngine() {
       const audio = audioRef.current as CastableAudioElement | null;
       if (!audio) return;
 
-      const globals = globalThis as CastGlobals;
-      const castContext = globals.cast?.framework?.CastContext?.getInstance();
-      const mediaNamespace = globals.chrome?.cast?.media;
-      const MediaInfo = mediaNamespace?.MediaInfo;
-      const LoadRequest = mediaNamespace?.LoadRequest;
+      void (async () => {
+        if (!currentSong || !directStreamUrl) {
+          toast.error("Pick a song before casting.");
+          return;
+        }
 
-      if (
-        castContext &&
-        MediaInfo &&
-        LoadRequest &&
-        directStreamUrl &&
-        currentSong
-      ) {
-        void (async () => {
+        if (!window.isSecureContext && !isSafariAirPlayAvailable(audio)) {
+          toast.error("Chromecast needs HTTPS or localhost. This LAN address is not secure.");
+          return;
+        }
+
+        if (isLocalhostUrl(directStreamUrl)) {
+          toast.error("Chromecast cannot play localhost streams. Use your server's LAN or HTTPS address.");
+          return;
+        }
+
+        const googleCast = await getGoogleCastSupport();
+
+        if (googleCast) {
+          const { castContext, mediaNamespace, MediaInfo, LoadRequest } = googleCast;
           const session =
             castContext.getCurrentSession?.() ??
             (await castContext.requestSession?.());
 
-          if (!session?.loadMedia) return;
+          if (!session?.loadMedia) {
+            toast.error("No Cast session was selected.");
+            return;
+          }
 
           const mediaInfo = new MediaInfo(
             directStreamUrl,
@@ -210,19 +309,27 @@ export function AudioEngine() {
           mediaInfo.metadata = metadata;
           mediaInfo.duration = currentSong.duration;
 
-          await session.loadMedia(new LoadRequest(mediaInfo));
-        })().catch(() => {});
-        return;
-      }
+          const request = new LoadRequest(mediaInfo);
+          request.currentTime = audio.currentTime || 0;
 
-      if (typeof audio.webkitShowPlaybackTargetPicker === "function") {
-        audio.webkitShowPlaybackTargetPicker();
-        return;
-      }
+          await session.loadMedia(request);
+          toast.success("Casting started.");
+          return;
+        }
 
-      if (typeof audio.remote?.prompt === "function") {
-        void audio.remote.prompt().catch(() => {});
-      }
+        const airPlayPicker = audio.webkitShowPlaybackTargetPicker;
+        if (isSafariAirPlayAvailable(audio) && airPlayPicker) {
+          airPlayPicker.call(audio);
+          return;
+        }
+
+        toast.error(
+          "No Cast picker is available here. Use the in-page Cast button in Chrome over HTTPS, or Safari for AirPlay."
+        );
+      })().catch((error) => {
+        console.error("Cast failed:", error);
+        toast.error("Casting failed. Make sure your Cast device can reach your music server.");
+      });
     };
 
     window.addEventListener("play-it-all-cast", castHandler);

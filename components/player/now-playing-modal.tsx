@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Download,
   ListMusic,
+  Maximize2,
   MoreHorizontal,
   Mic2,
   Pause,
@@ -16,6 +17,7 @@ import {
   SkipBack,
   SkipForward,
   Volume2,
+  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePlaybackStore } from "@/stores/playback-store";
@@ -40,6 +42,7 @@ export function NowPlayingModal() {
   const [activePanel, setActivePanel] = useState<"lyrics" | "queue" | null>(null);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const [isVolumeOpen, setIsVolumeOpen] = useState(false);
+  const [isLyricsFullscreen, setIsLyricsFullscreen] = useState(false);
   const isOpen = usePlayerUiStore((s) => s.isNowPlayingOpen);
   const closeNowPlaying = usePlayerUiStore((s) => s.closeNowPlaying);
 
@@ -76,6 +79,7 @@ export function NowPlayingModal() {
   function handleClose() {
     setIsOverflowOpen(false);
     setIsVolumeOpen(false);
+    setIsLyricsFullscreen(false);
     closeNowPlaying();
   }
 
@@ -107,6 +111,7 @@ export function NowPlayingModal() {
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
+                now-playing-card
                 relative
                 flex h-[calc(100dvh-12px)] w-full max-w-[760px] flex-col
                 rounded-t-[34px] sm:h-[min(820px,92vh)] sm:rounded-[38px]
@@ -115,7 +120,7 @@ export function NowPlayingModal() {
               "
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="mb-3 flex shrink-0 items-center justify-between sm:mb-4">
+              <div className="now-playing-header mb-3 flex shrink-0 items-center justify-between sm:mb-4">
                 <button
                   type="button"
                   onClick={handleClose}
@@ -186,7 +191,7 @@ export function NowPlayingModal() {
               <div className="flex min-h-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1 overflow-visible">
                   {activePanel ? (
-                    <div className="relative h-[min(260px,28dvh)] overflow-hidden rounded-[26px] border border-[var(--hairline)] bg-[var(--soft-fill)] p-4 sm:h-[min(360px,42dvh)] sm:rounded-[28px] sm:p-5">
+                    <div className="now-playing-panel relative h-[min(260px,28dvh)] overflow-hidden rounded-[26px] border border-[var(--hairline)] bg-[var(--soft-fill)] p-4 sm:h-[min(360px,42dvh)] sm:rounded-[28px] sm:p-5">
                       {coverUrl ? (
                         <Image
                           src={coverUrl}
@@ -203,6 +208,7 @@ export function NowPlayingModal() {
                             currentTime={currentTime}
                             isPlaying={isPlaying}
                             isLoading={lyricsLoading}
+                            onExpand={() => setIsLyricsFullscreen(true)}
                           />
                         ) : (
                           <QueuePanel
@@ -214,7 +220,7 @@ export function NowPlayingModal() {
                       </div>
                     </div>
                   ) : (
-                    <div className="relative mx-auto aspect-square w-full max-w-[min(290px,30dvh)] overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_34%,#ffffff),color-mix(in_srgb,var(--accent)_16%,#171412))] shadow-[0_22px_60px_rgba(0,0,0,0.22)] sm:max-w-[min(390px,42dvh)] sm:rounded-[34px]">
+                    <div className="now-playing-art relative mx-auto aspect-square w-full max-w-[min(290px,30dvh)] overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_34%,#ffffff),color-mix(in_srgb,var(--accent)_16%,#171412))] shadow-[0_22px_60px_rgba(0,0,0,0.22)] sm:max-w-[min(390px,42dvh)] sm:rounded-[34px]">
                       {coverUrl ? (
                         <Image
                           src={coverUrl}
@@ -236,8 +242,8 @@ export function NowPlayingModal() {
                     </div>
                   )}
 
-                <div className="mt-3 text-center sm:mt-5">
-                  <h2 className="line-clamp-1 text-xl font-black tracking-normal text-[var(--foreground)] sm:line-clamp-2 sm:text-3xl">
+                <div className="now-playing-meta mt-3 text-center sm:mt-5">
+                  <h2 className="now-playing-title line-clamp-1 text-xl font-black tracking-normal text-[var(--foreground)] sm:line-clamp-2 sm:text-3xl">
                     {currentSong.title}
                   </h2>
                   <div className="mt-2 flex min-w-0 justify-center">
@@ -261,12 +267,12 @@ export function NowPlayingModal() {
                         <Link
                           href={`/library/albums/${encodeURIComponent(currentSong.albumId)}`}
                           onClick={handleClose}
-                          className="line-clamp-1 text-sm swift-tertiary transition hover:text-[var(--accent)]"
+                            className="now-playing-album line-clamp-1 text-sm swift-tertiary transition hover:text-[var(--accent)]"
                         >
                           {currentSong.album}
                         </Link>
                       ) : (
-                        <p className="line-clamp-1 text-sm swift-tertiary">
+                        <p className="now-playing-album line-clamp-1 text-sm swift-tertiary">
                           {currentSong.album}
                         </p>
                       )}
@@ -274,7 +280,7 @@ export function NowPlayingModal() {
                   ) : null}
                 </div>
 
-                <div className="mt-3 flex shrink-0 items-center justify-center gap-2">
+                <div className="now-playing-tabs mt-3 flex shrink-0 items-center justify-center gap-2">
                   <PanelButton
                     icon={<Mic2 size={16} />}
                     label="Lyrics"
@@ -293,7 +299,7 @@ export function NowPlayingModal() {
                   />
                 </div>
 
-                <div className="mt-3 sm:mt-5">
+                <div className="now-playing-progress mt-3 sm:mt-5">
                   <input
                     type="range"
                     min={0}
@@ -310,11 +316,11 @@ export function NowPlayingModal() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex shrink-0 items-center justify-center gap-4 sm:mt-6">
+                <div className="now-playing-controls mt-4 flex shrink-0 items-center justify-center gap-4 sm:mt-6">
                   <button
                     type="button"
                     onClick={previous}
-                    className="inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
+                    className="now-playing-skip inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
                   >
                     <SkipBack size={24} />
                   </button>
@@ -322,7 +328,7 @@ export function NowPlayingModal() {
                   <button
                     type="button"
                     onClick={togglePlayPause}
-                    className="inline-flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition-all duration-200 hover:scale-[1.04] active:scale-[0.94]"
+                    className="now-playing-play inline-flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition-all duration-200 hover:scale-[1.04] active:scale-[0.94]"
                   >
                     {isPlaying ? (
                       <Pause size={30} />
@@ -334,15 +340,15 @@ export function NowPlayingModal() {
                   <button
                     type="button"
                     onClick={next}
-                    className="inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
+                    className="now-playing-skip inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
                   >
                     <SkipForward size={24} />
                   </button>
 
                   <motion.div
                     layout
-                    className={`flex h-14 items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-colors duration-200 hover:bg-[var(--soft-fill-hover)] ${
-                      isVolumeOpen ? "w-36 px-4" : "w-14"
+                    className={`now-playing-volume flex h-14 items-center justify-center overflow-visible rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-colors duration-200 hover:bg-[var(--soft-fill-hover)] ${
+                      isVolumeOpen ? "w-40 px-3" : "w-14"
                     }`}
                   >
                     <button
@@ -361,7 +367,7 @@ export function NowPlayingModal() {
                           animate={{ opacity: 1, width: 76 }}
                           exit={{ opacity: 0, width: 0 }}
                           transition={{ duration: 0.18, ease: "easeOut" }}
-                          className="overflow-hidden"
+                          className="flex h-8 items-center overflow-visible"
                         >
                           <input
                             type="range"
@@ -370,7 +376,7 @@ export function NowPlayingModal() {
                             step={0.1}
                             value={volume}
                             onChange={(e) => setVolume(Number(e.target.value))}
-                            className="w-[76px] cursor-pointer accent-[var(--accent)]"
+                            className="h-8 w-[76px] cursor-pointer accent-[var(--accent)]"
                             aria-label="Volume"
                           />
                         </motion.div>
@@ -383,6 +389,68 @@ export function NowPlayingModal() {
               </div>
             </motion.div>
           </div>
+          <AnimatePresence>
+            {isLyricsFullscreen ? (
+              <motion.div
+                className="fixed inset-0 z-[90] flex items-center justify-center p-2 sm:p-5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                onClick={() => setIsLyricsFullscreen(false)}
+              >
+                <div className="absolute inset-0 bg-black/45 backdrop-blur-2xl" />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: 18 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 18 }}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                  className="player-glass relative flex h-[calc(100dvh-16px)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[30px] p-4 sm:h-[min(860px,calc(100dvh-40px))] sm:rounded-[40px] sm:p-7"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {coverUrl ? (
+                    <Image
+                      src={coverUrl}
+                      alt=""
+                      fill
+                      unoptimized
+                      className="pointer-events-none object-cover opacity-15 blur-3xl"
+                    />
+                  ) : null}
+                  <div className="relative z-10 mb-4 flex shrink-0 items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-black uppercase tracking-[0.24em] swift-tertiary">
+                        Full Screen Lyrics
+                      </div>
+                      <div className="mt-1 line-clamp-1 text-xl font-black text-[var(--foreground)] sm:text-3xl">
+                        {currentSong.title}
+                      </div>
+                      <div className="line-clamp-1 text-sm font-semibold swift-subtitle sm:text-base">
+                        {currentSong.artist || "Unknown Artist"}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsLyricsFullscreen(false)}
+                      className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--foreground)] transition hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
+                      aria-label="Close full screen lyrics"
+                    >
+                      <X size={21} />
+                    </button>
+                  </div>
+                  <div className="relative z-10 min-h-0 flex-1">
+                    <LyricsPanel
+                      lyrics={lyrics}
+                      currentTime={currentTime}
+                      isPlaying={isPlaying}
+                      isLoading={lyricsLoading}
+                      fullscreen
+                    />
+                  </div>
+                </motion.div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </motion.div>
       ) : null}
     </AnimatePresence>
@@ -421,11 +489,15 @@ function LyricsPanel({
   currentTime,
   isPlaying,
   isLoading,
+  fullscreen = false,
+  onExpand,
 }: {
   lyrics?: LyricsPayload;
   currentTime: number;
   isPlaying: boolean;
   isLoading: boolean;
+  fullscreen?: boolean;
+  onExpand?: () => void;
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const lineRefs = useRef<Record<number, HTMLButtonElement | null>>({});
@@ -476,12 +548,26 @@ function LyricsPanel({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
-        <h3 className="text-xl font-black text-[var(--foreground)] sm:text-2xl">Lyrics</h3>
-        {lyrics?.source && lyrics.source !== "none" ? (
-          <div className="rounded-full bg-[var(--soft-fill)] px-3 py-2 text-xs font-bold uppercase tracking-wide swift-subtitle">
-            {lyrics.source}
-          </div>
-        ) : null}
+        <h3 className={fullscreen ? "text-2xl font-black text-[var(--foreground)] sm:text-4xl" : "text-xl font-black text-[var(--foreground)] sm:text-2xl"}>
+          Lyrics
+        </h3>
+        <div className="flex items-center gap-2">
+          {lyrics?.source && lyrics.source !== "none" ? (
+            <div className="rounded-full bg-[var(--soft-fill)] px-3 py-2 text-xs font-bold uppercase tracking-wide swift-subtitle">
+              {lyrics.source}
+            </div>
+          ) : null}
+          {onExpand ? (
+            <button
+              type="button"
+              onClick={onExpand}
+              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--foreground)] transition hover:bg-[var(--soft-fill-hover)]"
+              aria-label="Open full screen lyrics"
+            >
+              <Maximize2 size={16} />
+            </button>
+          ) : null}
+        </div>
       </div>
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center text-sm swift-subtitle">
@@ -491,7 +577,9 @@ function LyricsPanel({
         <div
           ref={scrollerRef}
           onScroll={handleLyricsScroll}
-          className="scrollbar-subtle -mx-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 py-8"
+          className={`scrollbar-subtle -mx-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-2 ${
+            fullscreen ? "gap-4 py-[24dvh] sm:gap-6" : "gap-2 py-8"
+          }`}
         >
           {synced.map((line, index) => {
             const isCurrent = index === currentLineIndex;
@@ -507,11 +595,13 @@ function LyricsPanel({
                 onClick={() => dispatchSeek(line.time)}
                 animate={{
                   opacity: isCurrent ? 1 : isPast ? 0.58 : 0.42,
-                  scale: isCurrent ? 1.055 : 1,
+                  scale: isCurrent ? (fullscreen ? 1.08 : 1.055) : 1,
                   y: isCurrent ? -1 : 0,
                 }}
                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                className={`px-3 py-1 text-center text-lg leading-snug transition-colors sm:text-xl ${
+                className={`px-3 py-1 text-center leading-snug transition-colors ${
+                  fullscreen ? "text-2xl sm:text-4xl lg:text-5xl" : "text-lg sm:text-xl"
+                } ${
                   isCurrent
                     ? "font-black text-[var(--foreground)]"
                     : isPast
@@ -525,7 +615,11 @@ function LyricsPanel({
           })}
         </div>
       ) : lyrics?.plain?.trim() ? (
-        <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto whitespace-pre-line text-center text-lg font-bold leading-relaxed text-[var(--foreground)]">
+        <div
+          className={`scrollbar-subtle min-h-0 flex-1 overflow-y-auto whitespace-pre-line text-center font-bold leading-relaxed text-[var(--foreground)] ${
+            fullscreen ? "px-2 py-8 text-2xl sm:text-4xl" : "text-lg"
+          }`}
+        >
           {lyrics.plain}
         </div>
       ) : (

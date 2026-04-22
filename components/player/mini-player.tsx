@@ -35,13 +35,12 @@ export function MiniPlayer() {
   }
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-40 flex justify-center px-3 lg:bottom-4 lg:z-50">
+    <div className="mini-player-dock pointer-events-none fixed inset-x-0 z-40 flex justify-center px-3 lg:bottom-4 lg:z-50">
       <div
         className="
           pointer-events-auto
           w-full max-w-[760px]
-          rounded-full
-          px-[14px] py-[10px]
+          rounded-[28px] px-[12px] py-[9px] sm:rounded-full sm:px-[14px] sm:py-[10px]
           player-glass
         "
         style={{
@@ -66,13 +65,13 @@ export function MiniPlayer() {
           />
         </div>
 
-        <div className="flex items-center gap-[14px]">
+        <div className="flex items-center gap-3 sm:gap-[14px]">
           <button
             type="button"
             onClick={openNowPlaying}
             className="flex min-w-0 flex-1 cursor-pointer items-center gap-[14px] rounded-full text-left transition-all duration-200 active:scale-[0.995]"
           >
-            <div className="relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-[14px] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_34%,#ffffff),color-mix(in_srgb,var(--accent)_16%,#171412))]">
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[13px] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_34%,#ffffff),color-mix(in_srgb,var(--accent)_16%,#171412))] sm:h-[52px] sm:w-[52px] sm:rounded-[14px]">
               {coverUrl ? (
                 <Image
                   src={coverUrl}
@@ -85,16 +84,16 @@ export function MiniPlayer() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="line-clamp-2 text-[15px] font-bold leading-tight text-[var(--foreground)]">
+              <div className="line-clamp-1 text-[14px] font-bold leading-tight text-[var(--foreground)] sm:line-clamp-2 sm:text-[15px]">
                 {currentSong.title}
               </div>
-              <div className="truncate text-[14px] swift-subtitle">
+              <div className="truncate text-[12px] swift-subtitle sm:text-[14px]">
                 {currentSong.artist || "Unknown Artist"}
               </div>
             </div>
           </button>
 
-          <div className="flex items-center gap-[18px] text-[var(--accent)]">
+          <div className="flex items-center gap-1 text-[var(--accent)] sm:gap-[18px]">
             <span className="hidden sm:inline-flex">
               {waveformMotion ? <WaveformIndicator active={isPlaying} /> : <Airplay size={22} />}
             </span>

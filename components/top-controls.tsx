@@ -29,26 +29,28 @@ export function TopControls() {
   }
 
   return (
-    <div className="fixed right-3 top-3 z-50 hidden items-center gap-2 lg:flex">
+    <div className="mobile-top-controls fixed right-3 top-3 z-50 flex items-center gap-2">
       <button
         type="button"
         onClick={requestCast}
-        className="player-glass inline-flex h-11 w-11 items-center justify-center rounded-full text-[var(--foreground)] transition hover:scale-[1.04] active:scale-[0.94]"
-        aria-label="Cast or AirPlay"
+        className="player-glass inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-bold text-[var(--foreground)] transition hover:scale-[1.04] active:scale-[0.94] sm:px-4"
+        aria-label="Open Cast or AirPlay picker"
+        title="Open Cast or AirPlay picker"
       >
-        <Airplay size={19} />
+        <Airplay size={18} />
+        <span className="hidden sm:inline">Cast</span>
       </button>
 
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="player-glass inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-bold text-[var(--foreground)] transition hover:scale-[1.02] active:scale-[0.98]"
+          className="player-glass inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-bold text-[var(--foreground)] transition hover:scale-[1.02] active:scale-[0.98] sm:px-4"
           aria-label="Quick settings"
           aria-expanded={open}
         >
           <SlidersHorizontal size={18} />
-          Quick
+          <span className="hidden sm:inline">Quick</span>
         </button>
 
         <AnimatePresence>

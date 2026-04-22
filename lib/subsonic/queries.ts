@@ -271,6 +271,29 @@ export function useLyrics(
     queryFn: async () => {
       if (!client) throw new Error("No client");
 
+      // First, try LRCLIB
+      if (artist && title) {
+        const params = new URLSearchParams({
+          track_name: title,
+          artist_name: artist,
+        });
+        if (album) params.set("album_name", album);
+        if (duration) params.set("duration", String(duration));
+
+        try {
+          const response = await fetch(`/api/lrclib?${params.toString()}`);
+          if (response.ok) {
+            const lrclibData = (await response.json()) as LyricsPayload;
+            if (lrclibData.plain || lrclibData.synced.length) {
+              return lrclibData;
+            }
+          }
+        } catch {
+          // Continue to Subsonic fallback.
+        }
+      }
+
+      // Then, try Subsonic
       if (songId) {
         try {
           const byId = await client.getLyricsBySongId(songId);
@@ -310,20 +333,10 @@ export function useLyrics(
           } satisfies LyricsPayload;
         }
       } catch {
-        // Continue to LRCLIB fallback.
+        // No lyrics available.
       }
 
-      const params = new URLSearchParams({
-        track_name: title,
-        artist_name: artist,
-      });
-      if (album) params.set("album_name", album);
-      if (duration) params.set("duration", String(duration));
-
-      const response = await fetch(`/api/lrclib?${params.toString()}`);
-      if (!response.ok) return emptyLyrics();
-
-      return (await response.json()) as LyricsPayload;
+      return emptyLyrics();
     },
   });
 }
