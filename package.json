@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && npm run prepare:standalone",
-    "prepare:standalone": "node scripts/patch-standalone-server.mjs && mkdir -p .next/standalone/.next && rm -rf .next/standalone/.next/static .next/standalone/public && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public",
+    "prepare:standalone": "node scripts/patch-standalone-server.mjs",
     "start": "next start",
     "lint": "eslint",
     "electron": "wait-on http://localhost:3000 && PLAYITALL_DEV_SERVER_URL=http://localhost:3000 electron .",
