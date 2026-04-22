@@ -35,7 +35,9 @@ Go to the latest GitHub Release and download the installer for your platform.
 
 ### macOS
 
-Download the `.dmg`, open it, and drag `Play It All.app` into Applications.
+Download the `.dmg` for your Mac, open it, and drag `Play It All.app` into
+Applications. Intel Macs use the `x64` build. Apple Silicon Macs use the
+`arm64` build.
 
 Because early builds are not signed/notarized, macOS may block the app the first
 time you open it.

@@ -36,9 +36,10 @@ npm version major
 
 After the tag is pushed, open the GitHub Actions tab and wait for all three
 Release jobs to finish. Then open the GitHub Releases page, confirm the macOS
-`.dmg`/`.zip`, Windows installer, Linux AppImage, and updater metadata were
-uploaded, and edit the release notes if you want a nicer changelog. The in-app
-Settings page reads those GitHub release notes for the changelog/history view.
+Intel and Apple Silicon `.dmg`/`.zip` files, Windows installer, Linux AppImage,
+and updater metadata were uploaded, and edit the release notes if you want a
+nicer changelog. The in-app Settings page reads those GitHub release notes for
+the changelog/history view.
 
 Existing installed Electron apps check for updates shortly after launch and
 again every six hours. Users can also open Settings and press Check in the
@@ -68,8 +69,9 @@ instead of GitHub Actions. You need `GH_TOKEN` exported in that terminal first.
 
 ## User Install
 
-For macOS, distribute the `.dmg` from the GitHub release. Users should drag
-`Play It All.app` into Applications. For local test installs, use:
+For macOS, distribute the `.dmg` from the GitHub release. Intel Macs should use
+the `x64` build, and Apple Silicon Macs should use the `arm64` build. Users
+should drag `Play It All.app` into Applications. For local test installs, use:
 
 ```bash
 npm run install:mac
