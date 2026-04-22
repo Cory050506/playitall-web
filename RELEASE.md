@@ -14,8 +14,8 @@
 ## Automatic GitHub Release
 
 The repo includes `.github/workflows/release.yml`. It runs whenever you push a
-version tag like `v0.1.1`, builds the macOS app, and uploads the installer plus
-auto-update metadata to GitHub Releases.
+version tag like `v0.1.1`, builds the macOS, Windows, and Linux apps, and
+uploads the installers plus auto-update metadata to GitHub Releases.
 
 ```bash
 npm run lint
@@ -34,11 +34,11 @@ npm version minor
 npm version major
 ```
 
-After the tag is pushed, open the GitHub Actions tab and wait for the Release
-workflow to finish. Then open the GitHub Releases page, confirm the `.dmg`,
-`.zip`, and updater metadata were uploaded, and edit the release notes if you
-want a nicer changelog. The in-app Settings page reads those GitHub release
-notes for the changelog/history view.
+After the tag is pushed, open the GitHub Actions tab and wait for all three
+Release jobs to finish. Then open the GitHub Releases page, confirm the macOS
+`.dmg`/`.zip`, Windows installer, Linux AppImage, and updater metadata were
+uploaded, and edit the release notes if you want a nicer changelog. The in-app
+Settings page reads those GitHub release notes for the changelog/history view.
 
 Existing installed Electron apps check for updates shortly after launch and
 again every six hours. Users can also open Settings and press Check in the
@@ -87,9 +87,10 @@ For public distribution and smooth macOS auto-updates, use a Developer ID
 certificate and notarization so Gatekeeper trusts the app. Windows distribution
 should eventually use a code-signing certificate to reduce SmartScreen warnings.
 
-The GitHub Actions workflow currently publishes unsigned macOS builds. To ship
-signed public builds from GitHub Actions, add Apple signing certificate secrets
-and remove `CSC_IDENTITY_AUTO_DISCOVERY: false` from the workflow.
+The GitHub Actions workflow currently publishes unsigned macOS and Windows
+builds. To ship signed public builds from GitHub Actions, add Apple signing
+certificate secrets and Windows code-signing secrets, then remove or scope
+`CSC_IDENTITY_AUTO_DISCOVERY: false` from the workflow.
 
 ## Size
 
