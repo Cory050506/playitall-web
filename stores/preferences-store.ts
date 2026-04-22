@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { EqualizerPreset } from "@/lib/equalizer-presets";
 
 export type AccentOption =
   | "sunset"
@@ -27,12 +28,14 @@ type PreferencesState = {
   artworkStyle: ArtworkStyle;
   higherContrastCards: boolean;
   waveformMotion: boolean;
+  sidebarCollapsed: boolean;
 
   libraryLayout: LibraryLayout;
 
   enableTranscoding: boolean;
   preferredFormat: PreferredFormat;
   preferredBitrate: PreferredBitrate;
+  equalizerPreset: EqualizerPreset;
 
   enableOfflineDownloads: boolean;
   offlineSaveAs: OfflineSaveAs;
@@ -46,12 +49,14 @@ type PreferencesState = {
   setArtworkStyle: (value: ArtworkStyle) => void;
   setHigherContrastCards: (value: boolean) => void;
   setWaveformMotion: (value: boolean) => void;
+  setSidebarCollapsed: (value: boolean) => void;
 
   setLibraryLayout: (value: LibraryLayout) => void;
 
   setEnableTranscoding: (value: boolean) => void;
   setPreferredFormat: (value: PreferredFormat) => void;
   setPreferredBitrate: (value: PreferredBitrate) => void;
+  setEqualizerPreset: (value: EqualizerPreset) => void;
 
   setEnableOfflineDownloads: (value: boolean) => void;
   setOfflineSaveAs: (value: OfflineSaveAs) => void;
@@ -69,12 +74,14 @@ export const usePreferencesStore = create<PreferencesState>()(
       artworkStyle: "rounded",
       higherContrastCards: false,
       waveformMotion: true,
+      sidebarCollapsed: false,
 
       libraryLayout: "grid",
 
       enableTranscoding: true,
       preferredFormat: "original",
       preferredBitrate: "auto",
+      equalizerPreset: "flat",
 
       enableOfflineDownloads: true,
       offlineSaveAs: "original",
@@ -88,12 +95,14 @@ export const usePreferencesStore = create<PreferencesState>()(
       setArtworkStyle: (value) => set({ artworkStyle: value }),
       setHigherContrastCards: (value) => set({ higherContrastCards: value }),
       setWaveformMotion: (value) => set({ waveformMotion: value }),
+      setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
 
       setLibraryLayout: (value) => set({ libraryLayout: value }),
 
       setEnableTranscoding: (value) => set({ enableTranscoding: value }),
       setPreferredFormat: (value) => set({ preferredFormat: value }),
       setPreferredBitrate: (value) => set({ preferredBitrate: value }),
+      setEqualizerPreset: (value) => set({ equalizerPreset: value }),
 
       setEnableOfflineDownloads: (value) => set({ enableOfflineDownloads: value }),
       setOfflineSaveAs: (value) => set({ offlineSaveAs: value }),

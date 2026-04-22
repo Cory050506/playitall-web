@@ -6,15 +6,18 @@ import { SettingSelectRow } from "@/components/settings/setting-select-row";
 import { SettingToggleRow } from "@/components/settings/setting-toggle-row";
 import { SettingNoteCard } from "@/components/settings/setting-note-card";
 import { usePreferencesStore } from "@/stores/preferences-store";
+import { EQUALIZER_OPTIONS } from "@/lib/equalizer-presets";
 
 export default function QualitySettingsPage() {
   const {
     enableTranscoding,
     preferredFormat,
     preferredBitrate,
+    equalizerPreset,
     setEnableTranscoding,
     setPreferredFormat,
     setPreferredBitrate,
+    setEqualizerPreset,
   } = usePreferencesStore();
 
   return (
@@ -61,9 +64,22 @@ export default function QualitySettingsPage() {
         </div>
 
         <div>
+          <div className="mb-3 text-lg font-semibold text-[var(--foreground)]">Equalizer</div>
+
+          <GlassPanel className="overflow-hidden rounded-[28px]">
+            <SettingSelectRow
+              label="Preset"
+              value={equalizerPreset}
+              onChange={(value) => setEqualizerPreset(value as typeof equalizerPreset)}
+              options={EQUALIZER_OPTIONS}
+            />
+          </GlassPanel>
+        </div>
+
+        <div>
           <div className="mb-3 text-lg font-semibold text-[var(--foreground)]">Streaming</div>
           <SettingNoteCard>
-            Playback requests use your selected format and bitrate.
+            Playback requests use your selected format, bitrate, and equalizer preset.
           </SettingNoteCard>
         </div>
       </div>

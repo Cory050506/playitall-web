@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Pause, Play, SkipForward, Airplay, AudioLines } from "lucide-react";
+import type { PointerEvent } from "react";
+import { Pause, Play, SkipForward, Airplay } from "lucide-react";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { useCoverArtUrl } from "@/lib/subsonic/use-cover-art";
 import { usePlayerUiStore } from "@/stores/player-ui-store";
@@ -10,6 +11,8 @@ import { usePreferencesStore } from "@/stores/preferences-store";
 export function MiniPlayer() {
   const currentSong = usePlaybackStore((s) => s.currentSong);
   const isPlaying = usePlaybackStore((s) => s.isPlaying);
+  const currentTime = usePlaybackStore((s) => s.currentTime);
+  const duration = usePlaybackStore((s) => s.duration);
   const togglePlayPause = usePlaybackStore((s) => s.togglePlayPause);
   const next = usePlaybackStore((s) => s.next);
 
@@ -18,8 +21,18 @@ export function MiniPlayer() {
   const higherContrastCards = usePreferencesStore((s) => s.higherContrastCards);
 
   const coverUrl = useCoverArtUrl(currentSong?.coverArt, 200);
+  const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   if (!currentSong) return null;
+
+  function seekFromProgress(event: PointerEvent<HTMLDivElement>) {
+    if (!duration) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    window.dispatchEvent(
+      new CustomEvent("play-it-all-seek", { detail: ratio * duration })
+    );
+  }
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-40 flex justify-center px-3 lg:bottom-4 lg:z-50">
@@ -37,6 +50,22 @@ export function MiniPlayer() {
             : undefined,
         }}
       >
+        <div
+          role="slider"
+          aria-label="Playback progress"
+          aria-valuemin={0}
+          aria-valuemax={Math.floor(duration || 0)}
+          aria-valuenow={Math.floor(currentTime || 0)}
+          tabIndex={0}
+          onPointerDown={seekFromProgress}
+          className="absolute inset-x-5 bottom-[5px] h-1 cursor-pointer rounded-full bg-[var(--range-track)]"
+        >
+          <div
+            className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
         <div className="flex items-center gap-[14px]">
           <button
             type="button"
@@ -67,7 +96,7 @@ export function MiniPlayer() {
 
           <div className="flex items-center gap-[18px] text-[var(--accent)]">
             <span className="hidden sm:inline-flex">
-              {waveformMotion ? <AudioLines size={22} /> : <Airplay size={22} />}
+              {waveformMotion ? <WaveformIndicator active={isPlaying} /> : <Airplay size={22} />}
             </span>
             <button
               type="button"
@@ -88,5 +117,26 @@ export function MiniPlayer() {
         </div>
       </div>
     </div>
+  );
+}
+
+function WaveformIndicator({ active }: { active: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex h-6 w-7 items-center justify-center gap-0.5"
+    >
+      {[0.45, 0.78, 1, 0.62, 0.86].map((height, index) => (
+        <span
+          key={`${height}-${index}`}
+          data-active={active}
+          className="waveform-bar h-5 w-1 rounded-full bg-current"
+          style={{
+            animationDelay: `${index * 110}ms`,
+            transform: `scaleY(${active ? height : 0.45})`,
+          }}
+        />
+      ))}
+    </span>
   );
 }

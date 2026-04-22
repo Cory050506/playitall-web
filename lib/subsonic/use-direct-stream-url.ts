@@ -2,10 +2,10 @@
 
 import { useMemo } from "react";
 import { SubsonicClient } from "@/lib/subsonic/client";
-import { useSessionStore } from "@/stores/session-store";
 import { usePreferencesStore } from "@/stores/preferences-store";
+import { useSessionStore } from "@/stores/session-store";
 
-export function useStreamUrl(songId?: string | null) {
+export function useDirectStreamUrl(songId?: string | null) {
   const serverUrl = useSessionStore((s) => s.serverUrl);
   const username = useSessionStore((s) => s.username);
   const password = useSessionStore((s) => s.password);
@@ -22,15 +22,12 @@ export function useStreamUrl(songId?: string | null) {
       password,
     });
 
-    let maxBitRate: number | undefined = undefined;
+    const maxBitRate =
+      enableTranscoding && preferredBitrate !== "auto"
+        ? Number(preferredBitrate)
+        : undefined;
 
-    if (enableTranscoding && preferredBitrate !== "auto") {
-      maxBitRate = Number(preferredBitrate);
-    }
-
-    const directStreamUrl = client.getStreamUrl(songId, maxBitRate);
-
-    return `/api/stream?url=${encodeURIComponent(directStreamUrl)}`;
+    return client.getStreamUrl(songId, maxBitRate);
   }, [
     songId,
     serverUrl,

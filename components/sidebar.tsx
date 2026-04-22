@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Library, Search, Settings } from "lucide-react";
+import {
+  Home,
+  Library,
+  PanelLeftClose,
+  Search,
+  Settings,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GlassPanel } from "@/components/glass/glass-panel";
+import { AppLogo } from "@/components/app-logo";
+import { usePreferencesStore } from "@/stores/preferences-store";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
@@ -15,16 +23,45 @@ const items = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const collapsed = usePreferencesStore((s) => s.sidebarCollapsed);
+  const setCollapsed = usePreferencesStore((s) => s.setSidebarCollapsed);
 
   return (
     <>
     <aside className="fixed left-3 top-3 z-40 hidden lg:block">
       <GlassPanel
         dark
-        className="h-[calc(100vh-24px)] w-[228px] rounded-[22px] p-3"
+        className={cn(
+          "h-[calc(100vh-24px)] rounded-[22px] p-3 transition-[width] duration-300",
+          collapsed ? "w-[76px]" : "w-[228px]"
+        )}
       >
-        <div className="mb-3 px-3 pt-1 text-sm font-semibold swift-subtitle">
-          Play It All
+        <div
+          className={cn(
+            "mb-3 flex items-center pt-1",
+            collapsed ? "justify-center" : "justify-between px-3"
+          )}
+        >
+          {!collapsed ? (
+            <div className="flex min-w-0 items-center gap-3">
+              <AppLogo className="h-9 w-9 shrink-0 rounded-[11px]" />
+              <div className="min-w-0 text-sm font-semibold swift-subtitle">
+                Play It All
+              </div>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--foreground)] transition hover:bg-[var(--soft-fill-hover)]"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <AppLogo className="h-8 w-8 rounded-[10px]" />
+            ) : (
+              <PanelLeftClose size={19} />
+            )}
+          </button>
         </div>
 
         <nav className="space-y-2">
@@ -39,15 +76,17 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                title={collapsed ? item.label : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-[14px] px-4 py-3 text-[15px] font-semibold transition-all",
+                  "flex items-center rounded-[14px] py-3 text-[15px] font-semibold transition-all",
+                  collapsed ? "justify-center px-0" : "gap-3 px-4",
                   active
                     ? "bg-[var(--accent)] text-white shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
                     : "swift-subtitle hover:bg-[var(--soft-fill-hover)] hover:text-[var(--foreground)]"
                 )}
               >
                 <Icon size={20} />
-                <span>{item.label}</span>
+                {!collapsed ? <span>{item.label}</span> : null}
               </Link>
             );
           })}

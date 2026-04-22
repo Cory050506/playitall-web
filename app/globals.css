@@ -27,6 +27,8 @@
   --shadow-liquid: 0 18px 50px rgba(31, 26, 22, 0.14), inset 0 1px 0 rgba(255,255,255,0.58);
   --player-surface: rgba(255, 255, 255, 0.88);
   --player-surface-strong: rgba(255, 255, 255, 0.94);
+  --range-track: rgba(23, 20, 18, 0.14);
+  --range-thumb: #171412;
 }
 
 :root[data-theme="dark"] {
@@ -49,6 +51,8 @@
   --shadow-liquid: 0 18px 54px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255,255,255,0.14);
   --player-surface: rgba(22, 22, 25, 0.90);
   --player-surface-strong: rgba(30, 30, 34, 0.96);
+  --range-track: rgba(255, 255, 255, 0.18);
+  --range-thumb: rgba(255, 255, 255, 0.96);
 }
 
 html,
@@ -70,12 +74,41 @@ input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
+  cursor: pointer;
+}
+
+a,
+button,
+select,
+summary,
+[role="button"],
+[role="menuitem"],
+[role="tab"],
+[role="switch"],
+[role="slider"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  cursor: pointer;
+}
+
+@supports selector(label:has(input)) {
+  label:has(input) {
+    cursor: pointer;
+  }
+}
+
+button:disabled,
+[aria-disabled="true"],
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--range-track);
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -85,14 +118,14 @@ input[type="range"]::-webkit-slider-thumb {
   height: 12px;
   width: 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--range-thumb);
   border: 0;
 }
 
 input[type="range"]::-moz-range-track {
   height: 4px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--range-track);
 }
 
 input[type="range"]::-moz-range-thumb {
@@ -100,7 +133,7 @@ input[type="range"]::-moz-range-thumb {
   width: 12px;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--range-thumb);
 }
 
 body {
@@ -135,6 +168,7 @@ body::before {
 .glass {
   position: relative;
   overflow: hidden;
+  background: var(--panel);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--panel-strong) 86%, transparent) 0%,
@@ -149,6 +183,7 @@ body::before {
 .glass-dark {
   position: relative;
   overflow: hidden;
+  background: var(--sidebar);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--sidebar) 95%, transparent) 0%,
@@ -207,6 +242,7 @@ body::before {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--card-border);
+  background: var(--panel);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--panel-strong) 88%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)),
     color-mix(in srgb, var(--accent) 5%, transparent);
@@ -219,6 +255,7 @@ body::before {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--card-border);
+  background: var(--player-surface);
   background:
     linear-gradient(180deg, var(--player-surface-strong), var(--player-surface)),
     color-mix(in srgb, var(--accent) 5%, transparent);
@@ -262,4 +299,86 @@ body::before {
 
 .scrollbar-subtle::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@keyframes surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+main {
+  animation: surface-in 280ms ease-out both;
+}
+
+.glass,
+.glass-dark,
+.liquid-glass,
+.player-glass {
+  transition:
+    transform 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+@keyframes waveform-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+    opacity: 0.58;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.waveform-bar {
+  animation: waveform-bar 880ms ease-in-out infinite;
+  transform-origin: center;
+}
+
+.waveform-bar[data-active="false"] {
+  animation: none;
+  opacity: 0.52;
+}
+
+@supports not (color: color-mix(in srgb, white, black)) {
+  body {
+    background: var(--background);
+  }
+
+  body::before {
+    opacity: 0.22;
+  }
+
+  .glass,
+  .liquid-glass {
+    background: var(--panel-strong);
+  }
+
+  .glass-dark {
+    background: var(--sidebar);
+  }
+
+  .player-glass {
+    background: var(--player-surface-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

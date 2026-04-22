@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import type { KeyboardEvent } from "react";
 import type { Song } from "@/lib/subsonic/types";
 import { useCoverArtUrl } from "@/lib/subsonic/use-cover-art";
 import { usePlaybackStore } from "@/stores/playback-store";
@@ -39,9 +41,21 @@ export function RecentSongRow({
     playSong(song, queue);
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!song) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleClick();
+    }
+  }
+
   return (
-    <button
+    <div
+      role={song ? "button" : undefined}
+      tabIndex={song ? 0 : undefined}
+      aria-disabled={!song}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       className="flex w-full items-center gap-3 border-b border-[var(--hairline)] px-4 py-3 text-left transition hover:bg-[var(--soft-fill)] last:border-b-0"
     >
       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_34%,#ffffff),color-mix(in_srgb,var(--accent)_16%,#171412))]">
@@ -60,18 +74,40 @@ export function RecentSongRow({
         <div className="truncate text-[15px] font-medium text-[var(--foreground)]">
           {resolvedTitle}
         </div>
-        <div className="truncate text-sm swift-subtitle">{resolvedArtist}</div>
+        <div className="truncate text-sm swift-subtitle">
+          {song?.artistId ? (
+            <Link
+              href={`/library/artists/${encodeURIComponent(song.artistId)}`}
+              onClick={(event) => event.stopPropagation()}
+              className="hover:text-[var(--accent)]"
+            >
+              {resolvedArtist}
+            </Link>
+          ) : (
+            resolvedArtist
+          )}
+        </div>
       </div>
 
       {resolvedAlbum ? (
         <div className="hidden max-w-[240px] flex-1 truncate text-sm swift-tertiary lg:block">
-          {resolvedAlbum}
+          {song?.albumId ? (
+            <Link
+              href={`/library/albums/${encodeURIComponent(song.albumId)}`}
+              onClick={(event) => event.stopPropagation()}
+              className="hover:text-[var(--accent)]"
+            >
+              {resolvedAlbum}
+            </Link>
+          ) : (
+            resolvedAlbum
+          )}
         </div>
       ) : (
         <div className="hidden flex-1 lg:block" />
       )}
 
       {duration ? <div className="text-sm swift-tertiary">{duration}</div> : null}
-    </button>
+    </div>
   );
 }

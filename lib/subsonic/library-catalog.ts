@@ -3,7 +3,7 @@ import type { AlbumID3, Genre, Playlist, Song } from "@/lib/subsonic/types";
 
 const ALBUM_PAGE_SIZE = 500;
 const GENRE_PAGE_SIZE = 500;
-const ALBUM_DETAIL_CONCURRENCY = 8;
+const ALBUM_DETAIL_CONCURRENCY = 24;
 
 type AlbumListType = "newest" | "recent" | "random" | "alphabeticalByName";
 
