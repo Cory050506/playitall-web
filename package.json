@@ -2,27 +2,30 @@
   "name": "play-it-all-web",
   "version": "0.1.5",
   "private": true,
-  "main": "electron/main.mjs",
+  "main": "dist-electron/main/main.js",
   "scripts": {
     "dev": "next dev",
+    "desktop:dev": "electron-vite dev --config electron.vite.config.ts",
+    "desktop:build": "electron-vite build --config electron.vite.config.ts",
+    "desktop:preview": "electron-vite preview --config electron.vite.config.ts",
     "build": "next build && npm run prepare:standalone",
     "prepare:standalone": "node scripts/patch-standalone-server.mjs",
     "start": "next start",
     "lint": "eslint",
-    "electron": "wait-on http://localhost:3000 && PLAYITALL_DEV_SERVER_URL=http://localhost:3000 electron .",
-    "electron:dev": "concurrently -k \"npm run dev\" \"npm run electron\"",
-    "dist": "npm run build && electron-builder",
-    "dist:mac:dir": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir --mac",
+    "electron": "npm run desktop:dev",
+    "electron:dev": "npm run desktop:dev",
+    "dist": "npm run desktop:build && electron-builder",
+    "dist:mac:dir": "npm run desktop:build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir --mac",
     "install:mac": "npm run dist:mac:dir && ditto \"dist/mac/Play It All.app\" \"/Applications/Play It All.app\"",
-    "release": "npm run build && electron-builder --publish always"
+    "release": "npm run desktop:build && electron-builder --publish always"
   },
   "build": {
     "appId": "com.playitall.app",
     "productName": "Play It All",
     "asar": true,
     "files": [
-      "electron/**/*",
-      ".next/standalone/**/*",
+      "dist-electron/**/*",
+      "electron/assets/**/*",
       "node_modules/argparse/**/*",
       "node_modules/builder-util-runtime/**/*",
       "node_modules/debug/**/*",
@@ -79,11 +82,6 @@
       "!node_modules/use-sidecar/**/*",
       "!node_modules/zustand/**/*"
     ],
-    "asarUnpack": [
-      ".next/standalone/node_modules/@img/**/*",
-      ".next/standalone/node_modules/@next/swc-*/*",
-      ".next/standalone/node_modules/sharp/**/*"
-    ],
     "publish": [
       {
         "provider": "github",
@@ -117,7 +115,13 @@
     "win": {
       "icon": "electron/assets/icon.ico",
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ]
     },
     "linux": {
@@ -144,6 +148,7 @@
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-router-dom": "^7.14.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.12"
@@ -154,14 +159,17 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.0",
     "concurrently": "^9.2.1",
     "electron": "^41.2.2",
     "electron-builder": "^26.8.1",
+    "electron-vite": "^5.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "png-to-ico": "^3.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vite": "^7.3.2",
     "wait-on": "^9.0.5"
   }
 }
