@@ -12,13 +12,82 @@ import {
 } from "@/lib/subsonic/library-snapshot";
 import {
   emptyLyrics,
+  parseLrc,
   plainFromSynced,
   type LyricsPayload,
   type SyncedLyricLine,
 } from "@/lib/lyrics";
+import { isElectronRuntime } from "@/lib/runtime";
 import { useSessionStore } from "@/stores/session-store";
 
 const LIBRARY_STALE_TIME = 12 * 60 * 60 * 1000;
+
+type LrclibResponse = {
+  plainLyrics?: string | null;
+  syncedLyrics?: string | null;
+};
+
+function toLrclibPayload(input?: LrclibResponse | null) {
+  if (!input) return emptyLyrics();
+  const synced = input.syncedLyrics ? parseLrc(input.syncedLyrics) : [];
+  const plain = input.plainLyrics?.trim() || plainFromSynced(synced);
+
+  return {
+    plain,
+    synced,
+    source: plain || synced.length ? "lrclib" : "none",
+  } satisfies LyricsPayload;
+}
+
+async function fetchDesktopLrclib(params: URLSearchParams) {
+  const exactUrl = new URL("https://lrclib.net/api/get");
+  exactUrl.search = params.toString();
+
+  const exactResponse = await fetch(exactUrl.toString(), {
+    headers: {
+      "User-Agent": "PlayItAll-Desktop/0.1",
+      Accept: "application/json",
+    },
+  });
+
+  if (exactResponse.ok) {
+    const exactPayload = toLrclibPayload(
+      (await exactResponse.json()) as LrclibResponse | null
+    );
+    if (exactPayload.plain || exactPayload.synced.length) {
+      return exactPayload;
+    }
+  }
+
+  const fallbackUrl = new URL("https://lrclib.net/api/search");
+  fallbackUrl.searchParams.set(
+    "track_name",
+    params.get("track_name") ?? ""
+  );
+  fallbackUrl.searchParams.set(
+    "artist_name",
+    params.get("artist_name") ?? ""
+  );
+  if (params.get("duration")) {
+    fallbackUrl.searchParams.set("duration", params.get("duration") ?? "");
+  }
+
+  const fallbackResponse = await fetch(fallbackUrl.toString(), {
+    headers: {
+      "User-Agent": "PlayItAll-Desktop/0.1",
+      Accept: "application/json",
+    },
+  });
+
+  if (!fallbackResponse.ok) {
+    return emptyLyrics();
+  }
+
+  const fallback = (await fallbackResponse.json()) as LrclibResponse[];
+  return toLrclibPayload(
+    fallback.find((item) => item.syncedLyrics || item.plainLyrics) ?? null
+  );
+}
 
 function useClient() {
   const serverUrl = useSessionStore((s) => s.serverUrl);
@@ -281,11 +350,18 @@ export function useLyrics(
         if (duration) params.set("duration", String(duration));
 
         try {
-          const response = await fetch(`/api/lrclib?${params.toString()}`);
-          if (response.ok) {
-            const lrclibData = (await response.json()) as LyricsPayload;
+          if (isElectronRuntime()) {
+            const lrclibData = await fetchDesktopLrclib(params);
             if (lrclibData.plain || lrclibData.synced.length) {
               return lrclibData;
+            }
+          } else {
+            const response = await fetch(`/api/lrclib?${params.toString()}`);
+            if (response.ok) {
+              const lrclibData = (await response.json()) as LyricsPayload;
+              if (lrclibData.plain || lrclibData.synced.length) {
+                return lrclibData;
+              }
             }
           }
         } catch {

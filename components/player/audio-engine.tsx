@@ -4,13 +4,21 @@ import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { usePreferencesStore } from "@/stores/preferences-store";
+import { useSessionStore } from "@/stores/session-store";
 import { useCoverArtUrl } from "@/lib/subsonic/use-cover-art";
 import { useDirectStreamUrl } from "@/lib/subsonic/use-direct-stream-url";
 import { useStreamUrl } from "@/lib/subsonic/use-stream-url";
+import { getPlatform, isElectronRuntime } from "@/lib/runtime";
+import { SubsonicClient } from "@/lib/subsonic/client";
+import {
+  librarySnapshotKey,
+  loadFreshLibrarySnapshot,
+} from "@/lib/subsonic/library-snapshot";
 import {
   EQUALIZER_FREQUENCIES,
   EQUALIZER_PRESETS,
 } from "@/lib/equalizer-presets";
+import type { Song } from "@/lib/subsonic/types";
 
 type AudioContextWindow = Window &
   typeof globalThis & {
@@ -125,6 +133,66 @@ function setMediaSessionAction(
   }
 }
 
+async function getAutoplaySongs(currentSong: Song, queue: Song[]) {
+  const session = useSessionStore.getState();
+  const queueIds = new Set(queue.map((song) => song.id));
+
+  const fromSnapshot = (() => {
+    if (!session.serverUrl || !session.username) return [];
+    const snapshot = loadFreshLibrarySnapshot(
+      librarySnapshotKey(session.serverUrl, session.username)
+    )?.catalog;
+    if (!snapshot) return [];
+
+    const sameArtist = snapshot.songs.filter((song) => {
+      if (queueIds.has(song.id) || song.id === currentSong.id) return false;
+      if (currentSong.artistId && song.artistId) {
+        return song.artistId === currentSong.artistId;
+      }
+      return Boolean(currentSong.artist && song.artist === currentSong.artist);
+    });
+
+    const sameGenre = snapshot.songs.filter((song) => {
+      if (queueIds.has(song.id) || song.id === currentSong.id) return false;
+      if (!currentSong.genre || !song.genre) return false;
+      return song.genre === currentSong.genre;
+    });
+
+    const pool = [...sameArtist, ...sameGenre];
+    const deduped: Song[] = [];
+    const seen = new Set<string>();
+    for (const song of pool) {
+      if (!seen.has(song.id)) {
+        seen.add(song.id);
+        deduped.push(song);
+      }
+    }
+    return deduped.slice(0, 25);
+  })();
+
+  if (fromSnapshot.length) {
+    return fromSnapshot.sort(() => Math.random() - 0.5).slice(0, 12);
+  }
+
+  if (!session.serverUrl || !session.username || !session.password) {
+    return [];
+  }
+
+  try {
+    const client = new SubsonicClient({
+      serverUrl: session.serverUrl,
+      username: session.username,
+      password: session.password,
+    });
+    const response = await client.getRandomSongs(18);
+    const songs = response["subsonic-response"]?.randomSongs?.song ?? [];
+    return songs.filter((song) => !queueIds.has(song.id) && song.id !== currentSong.id);
+  } catch (error) {
+    console.error("Autoplay fetch failed:", error);
+    return [];
+  }
+}
+
 export function AudioEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -136,8 +204,6 @@ export function AudioEngine() {
   const volume = usePlaybackStore((s) => s.volume);
   const setCurrentTime = usePlaybackStore((s) => s.setCurrentTime);
   const setDuration = usePlaybackStore((s) => s.setDuration);
-  const next = usePlaybackStore((s) => s.next);
-  const pause = usePlaybackStore((s) => s.pause);
 
   const equalizerPreset = usePreferencesStore((s) => s.equalizerPreset);
   const streamUrl = useStreamUrl(currentSong?.id);
@@ -240,10 +306,31 @@ export function AudioEngine() {
     const onTimeUpdate = () => setCurrentTime(audio.currentTime || 0);
     const onLoadedMetadata = () => setDuration(audio.duration || 0);
     const onEnded = () => {
-      const before = usePlaybackStore.getState().currentSong?.id;
-      next();
-      const after = usePlaybackStore.getState().currentSong?.id;
-      if (before === after) pause();
+      void (async () => {
+        const state = usePlaybackStore.getState();
+        const song = state.currentSong;
+        const atEnd = state.currentIndex >= state.queue.length - 1;
+
+        if (!song || !atEnd) {
+          state.next();
+          return;
+        }
+
+        if (!usePreferencesStore.getState().keepMusicPlaying) {
+          state.pause();
+          return;
+        }
+
+        const additions = await getAutoplaySongs(song, state.queue);
+        if (additions.length) {
+          usePlaybackStore.getState().appendToQueue(additions);
+          usePlaybackStore.getState().next();
+          toast.success("Added related songs to keep the music going.");
+          return;
+        }
+
+        usePlaybackStore.getState().pause();
+      })();
     };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
@@ -255,7 +342,7 @@ export function AudioEngine() {
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [next, pause, setCurrentTime, setDuration]);
+  }, [setCurrentTime, setDuration]);
 
   useEffect(() => {
     const castHandler = () => {
@@ -323,8 +410,21 @@ export function AudioEngine() {
           return;
         }
 
+        if (isElectronRuntime()) {
+          const platform = getPlatform();
+          if (platform === "mac") {
+            toast.error("AirPlay is not available in the desktop app on this Mac right now.");
+            return;
+          }
+
+          if (platform === "windows" || platform === "linux") {
+            toast.error("Casting is disabled in the desktop app on Windows and Linux.");
+            return;
+          }
+        }
+
         toast.error(
-          "No Cast picker is available here. Use the in-page Cast button in Chrome over HTTPS, or Safari for AirPlay."
+          "No Cast picker is available here."
         );
       })().catch((error) => {
         console.error("Cast failed:", error);
@@ -388,12 +488,12 @@ export function AudioEngine() {
     if (isPlaying) {
       void audioContextRef.current?.resume();
       void audio.play().catch(() => {
-        pause();
+        usePlaybackStore.getState().pause();
       });
     } else {
       audio.pause();
     }
-  }, [isPlaying, pause, streamUrl]);
+  }, [isPlaying, streamUrl]);
 
   useEffect(() => {
     const seekHandler = (event: Event) => {

@@ -10,24 +10,37 @@ import { RecentSongRow } from "@/components/ui/recent-song-row";
 import { AlbumCard } from "@/components/home/album-card";
 import { useRandomSongs, useSearch } from "@/lib/subsonic/queries";
 import { formatDuration } from "@/lib/format";
-
-const suggestions = [
-  "Recently added",
-  "Random picks",
-  "Playlists",
-  "Jazz nights",
-];
+import { usePreferencesStore } from "@/stores/preferences-store";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
 
   const trimmed = query.trim();
   const searching = trimmed.length > 0;
+  const showSearchSuggestions = usePreferencesStore((s) => s.showSearchSuggestions);
 
   const { data: randomSongs = [] } = useRandomSongs();
   const { data: results, isLoading, error } = useSearch(trimmed);
 
   const recentSongs = useMemo(() => randomSongs.slice(0, 8), [randomSongs]);
+  const suggestions = useMemo(() => {
+    const unique = new Map<string, string>();
+
+    for (const song of randomSongs) {
+      if (song.artist && !unique.has(song.artist.toLowerCase())) {
+        unique.set(song.artist.toLowerCase(), song.artist);
+      }
+      if (song.album && !unique.has(song.album.toLowerCase())) {
+        unique.set(song.album.toLowerCase(), song.album);
+      }
+      if (!unique.has(song.title.toLowerCase())) {
+        unique.set(song.title.toLowerCase(), song.title);
+      }
+      if (unique.size >= 4) break;
+    }
+
+    return [...unique.values()].slice(0, 4);
+  }, [randomSongs]);
 
   return (
     <AppShell>
@@ -64,21 +77,23 @@ export default function SearchPage() {
 
         {!searching ? (
           <>
-            <section className="mb-6">
-              <div className="mb-3 text-xl font-semibold text-[var(--foreground)]">
-                Suggested Searches
-              </div>
+            {showSearchSuggestions && suggestions.length ? (
+              <section className="mb-6">
+                <div className="mb-3 text-xl font-semibold text-[var(--foreground)]">
+                  Suggested Searches
+                </div>
 
-              <GlassPanel className="overflow-hidden rounded-[28px]">
-                {suggestions.map((item) => (
-                  <SearchSuggestionRow
-                    key={item}
-                    label={item}
-                    onClick={() => setQuery(item)}
-                  />
-                ))}
-              </GlassPanel>
-            </section>
+                <GlassPanel className="overflow-hidden rounded-[28px]">
+                  {suggestions.map((item) => (
+                    <SearchSuggestionRow
+                      key={item}
+                      label={item}
+                      onClick={() => setQuery(item)}
+                    />
+                  ))}
+                </GlassPanel>
+              </section>
+            ) : null}
 
             <section>
               <div className="mb-3 text-xl font-semibold text-[var(--foreground)]">Recent Songs</div>

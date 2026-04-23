@@ -242,150 +242,146 @@ export function NowPlayingModal() {
                     </div>
                   )}
 
-                <div className="now-playing-meta mt-3 text-center sm:mt-5">
-                  <h2 className="now-playing-title line-clamp-1 text-xl font-black tracking-normal text-[var(--foreground)] sm:line-clamp-2 sm:text-3xl">
-                    {currentSong.title}
-                  </h2>
-                  <div className="mt-2 flex min-w-0 justify-center">
-                    {currentSong.artistId ? (
-                      <Link
-                        href={`/library/artists/${encodeURIComponent(currentSong.artistId)}`}
-                        onClick={handleClose}
-                        className="line-clamp-1 text-base swift-subtitle transition hover:text-[var(--accent)]"
-                      >
-                        {currentSong.artist || "Unknown Artist"}
-                      </Link>
-                    ) : (
-                      <p className="line-clamp-1 text-base swift-subtitle">
-                        {currentSong.artist || "Unknown Artist"}
-                      </p>
-                    )}
-                  </div>
-                  {currentSong.album ? (
-                    <div className="mt-1 flex min-w-0 justify-center">
-                      {currentSong.albumId ? (
+                  <div className="now-playing-meta mt-3 text-center sm:mt-5">
+                    <h2 className="now-playing-title line-clamp-1 text-xl font-black tracking-normal text-[var(--foreground)] sm:line-clamp-2 sm:text-3xl">
+                      {currentSong.title}
+                    </h2>
+                    <div className="mt-2 flex min-w-0 justify-center">
+                      {currentSong.artistId ? (
                         <Link
-                          href={`/library/albums/${encodeURIComponent(currentSong.albumId)}`}
+                          href={`/library/artists/${encodeURIComponent(currentSong.artistId)}`}
                           onClick={handleClose}
-                            className="now-playing-album line-clamp-1 text-sm swift-tertiary transition hover:text-[var(--accent)]"
+                          className="line-clamp-1 text-base swift-subtitle transition hover:text-[var(--accent)]"
                         >
-                          {currentSong.album}
+                          {currentSong.artist || "Unknown Artist"}
                         </Link>
                       ) : (
-                        <p className="now-playing-album line-clamp-1 text-sm swift-tertiary">
-                          {currentSong.album}
+                        <p className="line-clamp-1 text-base swift-subtitle">
+                          {currentSong.artist || "Unknown Artist"}
                         </p>
                       )}
                     </div>
-                  ) : null}
-                </div>
-
-                <div className="now-playing-tabs mt-3 flex shrink-0 items-center justify-center gap-2">
-                  <PanelButton
-                    icon={<Mic2 size={16} />}
-                    label="Lyrics"
-                    active={activePanel === "lyrics"}
-                    onClick={() =>
-                      setActivePanel(activePanel === "lyrics" ? null : "lyrics")
-                    }
-                  />
-                  <PanelButton
-                    icon={<ListMusic size={16} />}
-                    label={remainingQueueCount ? `${remainingQueueCount} Up Next` : "Up Next"}
-                    active={activePanel === "queue"}
-                    onClick={() =>
-                      setActivePanel(activePanel === "queue" ? null : "queue")
-                    }
-                  />
-                </div>
-
-                <div className="now-playing-progress mt-3 sm:mt-5">
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 0}
-                    step={1}
-                    value={Math.min(currentTime, duration || 0)}
-                    onChange={(e) => dispatchSeek(Number(e.target.value))}
-                    className="w-full cursor-pointer accent-[var(--accent)]"
-                  />
-
-                  <div className="mt-2 flex items-center justify-between text-xs swift-tertiary">
-                    <span>{formatDuration(Math.floor(currentTime))}</span>
-                    <span>{formatDuration(Math.floor(duration))}</span>
+                    {currentSong.album ? (
+                      <div className="mt-1 flex min-w-0 justify-center">
+                        {currentSong.albumId ? (
+                          <Link
+                            href={`/library/albums/${encodeURIComponent(currentSong.albumId)}`}
+                            onClick={handleClose}
+                            className="now-playing-album line-clamp-1 text-sm swift-tertiary transition hover:text-[var(--accent)]"
+                          >
+                            {currentSong.album}
+                          </Link>
+                        ) : (
+                          <p className="now-playing-album line-clamp-1 text-sm swift-tertiary">
+                            {currentSong.album}
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
-                <div className="now-playing-controls mt-4 flex shrink-0 items-center justify-center gap-4 sm:mt-6">
-                  <button
-                    type="button"
-                    onClick={previous}
-                    className="now-playing-skip inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
-                  >
-                    <SkipBack size={24} />
-                  </button>
+                <div className="now-playing-bottom mt-auto shrink-0 pt-3 sm:pt-5">
+                  <div className="now-playing-tabs flex items-center justify-center gap-2">
+                    <PanelButton
+                      icon={<Mic2 size={16} />}
+                      label="Lyrics"
+                      active={activePanel === "lyrics"}
+                      onClick={() =>
+                        setActivePanel(activePanel === "lyrics" ? null : "lyrics")
+                      }
+                    />
+                    <PanelButton
+                      icon={<ListMusic size={16} />}
+                      label={remainingQueueCount ? `${remainingQueueCount} Up Next` : "Up Next"}
+                      active={activePanel === "queue"}
+                      onClick={() =>
+                        setActivePanel(activePanel === "queue" ? null : "queue")
+                      }
+                    />
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={togglePlayPause}
-                    className="now-playing-play inline-flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition-all duration-200 hover:scale-[1.04] active:scale-[0.94]"
-                  >
-                    {isPlaying ? (
-                      <Pause size={30} />
-                    ) : (
-                      <Play size={30} className="ml-1" />
-                    )}
-                  </button>
+                  <div className="now-playing-progress mt-3 sm:mt-5">
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 0}
+                      step={1}
+                      value={Math.min(currentTime, duration || 0)}
+                      onChange={(e) => dispatchSeek(Number(e.target.value))}
+                      className="w-full cursor-pointer accent-[var(--accent)]"
+                    />
 
-                  <button
-                    type="button"
-                    onClick={next}
-                    className="now-playing-skip inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
-                  >
-                    <SkipForward size={24} />
-                  </button>
+                    <div className="mt-2 flex items-center justify-between text-xs swift-tertiary">
+                      <span>{formatDuration(Math.floor(currentTime))}</span>
+                      <span>{formatDuration(Math.floor(duration))}</span>
+                    </div>
+                  </div>
 
-                  <motion.div
-                    layout
-                    className={`now-playing-volume flex h-14 items-center justify-center overflow-visible rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-colors duration-200 hover:bg-[var(--soft-fill-hover)] ${
-                      isVolumeOpen ? "w-40 px-3" : "w-14"
-                    }`}
-                  >
+                  <div className="now-playing-controls mt-4 flex shrink-0 items-center justify-center gap-4 sm:mt-6">
                     <button
                       type="button"
-                      onClick={() => setIsVolumeOpen((value) => !value)}
-                      className="inline-flex h-14 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all duration-200 hover:scale-[1.04] active:scale-[0.94]"
-                      aria-label="Volume"
-                      aria-expanded={isVolumeOpen}
+                      onClick={previous}
+                      className="now-playing-skip inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
                     >
-                      <Volume2 size={22} />
+                      <SkipBack size={24} />
                     </button>
-                    <AnimatePresence initial={false}>
-                      {isVolumeOpen ? (
-                        <motion.div
-                          initial={{ opacity: 0, width: 0 }}
-                          animate={{ opacity: 1, width: 76 }}
-                          exit={{ opacity: 0, width: 0 }}
-                          transition={{ duration: 0.18, ease: "easeOut" }}
-                          className="flex h-8 items-center overflow-visible"
-                        >
-                          <input
-                            type="range"
-                            min={0}
-                            max={1}
-                            step={0.1}
-                            value={volume}
-                            onChange={(e) => setVolume(Number(e.target.value))}
-                            className="h-8 w-[76px] cursor-pointer accent-[var(--accent)]"
-                            aria-label="Volume"
-                          />
-                        </motion.div>
-                      ) : null}
-                    </AnimatePresence>
-                  </motion.div>
-                </div>
-                </div>
 
+                    <button
+                      type="button"
+                      onClick={togglePlayPause}
+                      className="now-playing-play inline-flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition-all duration-200 hover:scale-[1.04] active:scale-[0.94]"
+                    >
+                      {isPlaying ? (
+                        <Pause size={30} />
+                      ) : (
+                        <Play size={30} className="ml-1" />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={next}
+                      className="now-playing-skip inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
+                    >
+                      <SkipForward size={24} />
+                    </button>
+
+                    <div className="now-playing-volume relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-colors duration-200 hover:bg-[var(--soft-fill-hover)]">
+                      <button
+                        type="button"
+                        onClick={() => setIsVolumeOpen((value) => !value)}
+                        className="inline-flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all duration-200 hover:scale-[1.04] active:scale-[0.94]"
+                        aria-label="Volume"
+                        aria-expanded={isVolumeOpen}
+                      >
+                        <Volume2 size={22} />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {isVolumeOpen ? (
+                          <motion.div
+                            initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                            transition={{ duration: 0.18, ease: "easeOut" }}
+                            className="absolute bottom-[calc(100%+10px)] right-0 z-20 flex h-14 w-[132px] items-center rounded-[18px] border border-[var(--hairline)] bg-[var(--player-surface-strong)] px-3 shadow-[0_18px_44px_rgba(0,0,0,0.24)] backdrop-blur-2xl"
+                          >
+                            <input
+                              type="range"
+                              min={0}
+                              max={1}
+                              step={0.1}
+                              value={volume}
+                              onChange={(e) => setVolume(Number(e.target.value))}
+                              className="h-8 w-full cursor-pointer accent-[var(--accent)]"
+                              aria-label="Volume"
+                            />
+                          </motion.div>
+                        ) : null}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>

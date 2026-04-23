@@ -71,11 +71,13 @@ async function startNextServer() {
     return Promise.resolve();
   }
 
-  const serverPath = path.join(app.getAppPath(), ".next", "standalone", "server.js");
+  const serverPath = app.isPackaged
+    ? path.join(process.resourcesPath, "standalone", "server.js")
+    : path.join(app.getAppPath(), ".next", "standalone", "server.js");
 
   console.log("Starting standalone Next.js server on port", APP_PORT);
   nextProcess = spawn(process.execPath, [serverPath], {
-    cwd: app.isPackaged ? process.resourcesPath : path.dirname(serverPath),
+    cwd: path.dirname(serverPath),
     env: {
       ...process.env,
       ELECTRON_RUN_AS_NODE: "1",
@@ -229,6 +231,10 @@ function createWindow() {
       sandbox: true,
     },
   });
+
+  mainWindow.webContents.setUserAgent(
+    app.userAgentFallback.replace(/\sElectron\/[^\s]+/, "")
+  );
 
   mainWindow.loadURL(APP_URL);
 

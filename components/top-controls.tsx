@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePreferencesStore } from "@/stores/preferences-store";
+import { EQUALIZER_OPTIONS } from "@/lib/equalizer-presets";
 
 function requestCast() {
   window.dispatchEvent(new CustomEvent("play-it-all-cast"));
@@ -23,6 +24,7 @@ export function TopControls() {
   const mode = usePreferencesStore((s) => s.mode);
   const setMode = usePreferencesStore((s) => s.setMode);
   const equalizerPreset = usePreferencesStore((s) => s.equalizerPreset);
+  const setEqualizerPreset = usePreferencesStore((s) => s.setEqualizerPreset);
 
   function toggleMode() {
     setMode(mode === "dark" ? "light" : "dark");
@@ -74,19 +76,43 @@ export function TopControls() {
                 <span className="text-xs swift-tertiary">Toggle</span>
               </button>
 
-              <Link
-                href="/settings/quality"
-                onClick={() => setOpen(false)}
-                className="flex h-12 items-center justify-between rounded-[16px] px-3 text-sm font-bold text-[var(--foreground)] transition hover:bg-[var(--soft-fill-hover)]"
-              >
-                <span className="inline-flex items-center gap-3">
-                  <Sparkles size={17} />
-                  Equalizer
-                </span>
-                <span className="text-xs capitalize swift-tertiary">
-                  {equalizerPreset.replace("-", " ")}
-                </span>
-              </Link>
+              <div className="rounded-[16px] px-3 py-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-3 text-sm font-bold text-[var(--foreground)]">
+                    <Sparkles size={17} />
+                    Equalizer
+                  </span>
+                  <span className="text-xs capitalize swift-tertiary">
+                    {equalizerPreset.replace("-", " ")}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {EQUALIZER_OPTIONS.slice(0, 6).map((option) => {
+                    const active = option.value === equalizerPreset;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setEqualizerPreset(option.value)}
+                        className={`h-9 cursor-pointer rounded-full px-3 text-xs font-bold transition ${
+                          active
+                            ? "bg-[var(--accent)] text-white"
+                            : "bg-[var(--soft-fill)] text-[var(--foreground)] hover:bg-[var(--soft-fill-hover)]"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Link
+                  href="/settings/quality"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 flex h-10 items-center justify-center rounded-full bg-[var(--soft-fill)] text-xs font-bold text-[var(--foreground)] transition hover:bg-[var(--soft-fill-hover)]"
+                >
+                  More presets
+                </Link>
+              </div>
 
               <Link
                 href="/settings/appearance"

@@ -27,6 +27,7 @@ type PlaybackState = {
   setVolume: (volume: number) => void;
 
   setIndex: (index: number) => void;
+  appendToQueue: (songs: Song[]) => void;
 };
 
 export const usePlaybackStore = create<PlaybackState>()((set, get) => ({
@@ -134,6 +135,21 @@ export const usePlaybackStore = create<PlaybackState>()((set, get) => ({
       currentTime: 0,
       duration: 0,
       isPlaying: true,
+    });
+  },
+  appendToQueue: (songs) => {
+    if (!songs.length) return;
+
+    set((state) => {
+      const seen = new Set(state.queue.map((song) => song.id));
+      const additions = songs.filter((song) => !seen.has(song.id));
+      if (!additions.length) {
+        return state;
+      }
+
+      return {
+        queue: [...state.queue, ...additions],
+      };
     });
   },
 }));

@@ -34,6 +34,7 @@ export default function LibraryPage() {
   const queryClient = useQueryClient();
   const { data, isLoading, error, isFetching } = useLibraryStats();
   const libraryLayout = usePreferencesStore((s) => s.libraryLayout);
+  const libraryStartSection = usePreferencesStore((s) => s.libraryStartSection);
   const serverUrl = useSessionStore((s) => s.serverUrl);
   const username = useSessionStore((s) => s.username);
 
@@ -88,6 +89,10 @@ export default function LibraryPage() {
       count: formatCount(data?.downloadCount),
     },
   ];
+  const prioritizedItems = [
+    ...items.filter((item) => item.href === `/library/${libraryStartSection}`),
+    ...items.filter((item) => item.href !== `/library/${libraryStartSection}`),
+  ];
 
   return (
     <AppShell>
@@ -114,7 +119,7 @@ export default function LibraryPage() {
           <div className="text-red-500">Couldn’t load library stats.</div>
         ) : libraryLayout === "grid" ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-            {items.map((item) => (
+            {prioritizedItems.map((item) => (
               <LibraryCard
                 key={item.title}
                 item={item}
@@ -124,7 +129,7 @@ export default function LibraryPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => (
+            {prioritizedItems.map((item) => (
               <LibraryCard
                 key={item.title}
                 item={item}

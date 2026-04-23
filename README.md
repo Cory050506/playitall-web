@@ -2,7 +2,7 @@
 
 Play It All is a modern self-hosted music player for Subsonic-compatible
 servers such as Navidrome. It runs as a web app and as an Electron desktop app,
-with a liquid-glass interface inspired by the iOS version.
+with a liquid-glass interface inspired by iOS 26.
 
 The goal is simple: connect your music server, browse your library, press play,
 and get a polished music-app experience without giving up your own collection.
@@ -25,9 +25,6 @@ and get a polished music-app experience without giving up your own collection.
 
 - A Subsonic-compatible server.
 - Server URL, username, and password.
-- For Chromecast, use Chrome over HTTPS or localhost. Chromecast devices must be
-  able to reach the music stream URL directly, so a server saved as
-  `localhost` will not work for casting to another device.
 
 ## Download And Install
 
@@ -68,9 +65,11 @@ Only do this for builds you downloaded from this project's release page.
 
 ### Windows
 
-Download the Windows installer from the release page and run it.
+Download the Windows installer from the release page and run it. Standard Intel
+and AMD Windows PCs should use the `x64` build. Windows on ARM devices should
+use the `arm64` build.
 
-Because early builds are not code-signed, Windows SmartScreen may warn you.
+Because builds are not code-signed, Windows SmartScreen may warn you.
 
 To open an unsigned build:
 
@@ -78,8 +77,7 @@ To open an unsigned build:
 2. Confirm the publisher/app name looks like Play It All.
 3. Click `Run anyway`.
 
-Windows may continue warning until future builds are signed with a code-signing
-certificate.
+
 
 ### Linux
 

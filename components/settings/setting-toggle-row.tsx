@@ -18,7 +18,7 @@ export function SettingToggleRow({
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+        className={`relative h-7 w-12 shrink-0 cursor-pointer rounded-full transition ${
           checked ? "bg-[var(--accent)]" : "bg-[var(--soft-fill-hover)]"
         }`}
       >

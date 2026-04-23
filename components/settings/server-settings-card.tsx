@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LogOut, Save } from "lucide-react";
 import { testSubsonicConnection } from "@/lib/subsonic/client";
+import { isElectronRuntime } from "@/lib/runtime";
 import { normalizeBaseUrl } from "@/lib/subsonic/helpers";
 import { useSessionStore } from "@/stores/session-store";
 import { GlassPanel } from "@/components/glass/glass-panel";
@@ -56,6 +57,10 @@ export function ServerSettingsCard() {
 
   function logout() {
     clearSession();
+    if (isElectronRuntime()) {
+      window.location.hash = "#/login";
+      return;
+    }
     window.location.href = "/login";
   }
 

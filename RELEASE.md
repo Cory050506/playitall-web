@@ -14,12 +14,12 @@
 ## Automatic GitHub Release
 
 The repo includes `.github/workflows/release.yml`. It runs whenever you push a
-version tag like `v0.1.1`, builds the macOS, Windows, and Linux apps, and
+version tag like `v0.1.1`, builds the macOS, Windows, and Linux Electron apps, and
 uploads the installers plus auto-update metadata to GitHub Releases.
 
 ```bash
 npm run lint
-npm run build
+npm run desktop:build
 npm version patch
 git push origin main --follow-tags
 ```
@@ -36,10 +36,10 @@ npm version major
 
 After the tag is pushed, open the GitHub Actions tab and wait for all three
 Release jobs to finish. Then open the GitHub Releases page, confirm the macOS
-Intel and Apple Silicon `.dmg`/`.zip` files, Windows installer, Linux AppImage,
-and updater metadata were uploaded, and edit the release notes if you want a
-nicer changelog. The in-app Settings page reads those GitHub release notes for
-the changelog/history view.
+Intel and Apple Silicon `.dmg`/`.zip` files, Windows `x64` and `arm64`
+installers, Linux AppImage, and updater metadata were uploaded, and edit the
+release notes if you want a nicer changelog. The in-app Settings page reads
+those GitHub release notes for the changelog/history view.
 
 Existing installed Electron apps check for updates shortly after launch and
 again every six hours. Users can also open Settings and press Check in the
@@ -50,10 +50,10 @@ Updates card. If an update has downloaded, the card shows a Restart button.
 1. Bump the version in `package.json`.
 2. Build and verify locally:
    ```bash
-   npm run lint
-   npm run build
-   npm run dist:mac:dir
-   npm run install:mac
+    npm run lint
+    npm run desktop:build
+    npm run dist:mac:dir
+    npm run install:mac
    ```
 3. Publish installers and updater metadata to GitHub Releases:
    ```bash
@@ -96,6 +96,6 @@ certificate secrets and Windows code-signing secrets, then remove or scope
 
 ## Size
 
-The Electron package uses Next.js standalone output instead of bundling the full
-project directory. Local macOS directory builds are currently around 635 MB
-instead of the previous roughly 2 GB app bundle.
+The Electron package now builds from the Electron + Vite desktop output instead
+of the bundled Next standalone server path, which removes a big chunk of the
+desktop startup and packaging overhead.

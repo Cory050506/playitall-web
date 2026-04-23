@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getBrandAssetPath } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 
 type AppLogoProps = {
@@ -17,7 +18,7 @@ export function AppLogo({ className, imageClassName }: AppLogoProps) {
       )}
     >
       <Image
-        src="/brand/playitall-icon.png"
+        src={getBrandAssetPath("playitall-icon.png")}
         alt="Play It All"
         fill
         sizes="48px"

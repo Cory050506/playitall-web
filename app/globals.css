@@ -70,7 +70,7 @@ html {
   --app-text-size: 16px;
   --mobile-nav-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   --mobile-nav-height: 4.75rem;
-  --mini-player-bottom: calc(var(--mobile-nav-bottom) + var(--mobile-nav-height) + 0.75rem);
+  --mini-player-bottom: calc(var(--mobile-nav-bottom) + var(--mobile-nav-height) + 1.2rem);
 }
 
 input[type="range"] {
@@ -401,12 +401,41 @@ body::before {
   html {
     font-size: min(var(--app-text-size, 16px), 16px);
   }
+
+  .now-playing-card {
+    padding-top: 0.9rem !important;
+  }
+
+  .now-playing-panel {
+    height: min(320px, 35dvh) !important;
+  }
+
+  .now-playing-art {
+    max-width: min(250px, 27dvh) !important;
+  }
+
+  .now-playing-meta {
+    margin-top: 1.15rem !important;
+  }
+
+  .now-playing-bottom {
+    padding-top: 1.2rem !important;
+  }
+
+  .now-playing-tabs {
+    justify-content: center !important;
+  }
+
+  .now-playing-controls {
+    margin-top: 1rem !important;
+    padding-bottom: 0.15rem;
+  }
 }
 
 @media (max-width: 420px) {
   :root {
     --mobile-nav-height: 4.45rem;
-    --mini-player-bottom: calc(var(--mobile-nav-bottom) + var(--mobile-nav-height) + 0.55rem);
+    --mini-player-bottom: calc(var(--mobile-nav-bottom) + var(--mobile-nav-height) + 0.95rem);
   }
 
   .mobile-bottom-nav {

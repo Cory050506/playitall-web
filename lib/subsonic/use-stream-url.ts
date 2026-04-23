@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { SubsonicClient } from "@/lib/subsonic/client";
+import { isElectronRuntime } from "@/lib/runtime";
 import { useSessionStore } from "@/stores/session-store";
 import { usePreferencesStore } from "@/stores/preferences-store";
 
@@ -30,7 +31,9 @@ export function useStreamUrl(songId?: string | null) {
 
     const directStreamUrl = client.getStreamUrl(songId, maxBitRate);
 
-    return `/api/stream?url=${encodeURIComponent(directStreamUrl)}`;
+    return isElectronRuntime()
+      ? directStreamUrl
+      : `/api/stream?url=${encodeURIComponent(directStreamUrl)}`;
   }, [
     songId,
     serverUrl,

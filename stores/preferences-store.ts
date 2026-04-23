@@ -17,6 +17,7 @@ export type AppearanceMode = "system" | "dark" | "light";
 export type TextSizeOption = "small" | "medium" | "large" | "extra-large";
 export type ArtworkStyle = "rounded" | "square" | "soft";
 export type LibraryLayout = "list" | "grid";
+export type LibraryStartSection = "albums" | "artists" | "songs";
 export type PreferredFormat = "original" | "mp3" | "aac" | "opus";
 export type PreferredBitrate = "auto" | "96" | "128" | "192" | "256" | "320";
 export type OfflineSaveAs = "original" | "mp3-cache";
@@ -31,6 +32,9 @@ type PreferencesState = {
   sidebarCollapsed: boolean;
 
   libraryLayout: LibraryLayout;
+  libraryStartSection: LibraryStartSection;
+  showSearchSuggestions: boolean;
+  keepMusicPlaying: boolean;
 
   enableTranscoding: boolean;
   preferredFormat: PreferredFormat;
@@ -52,6 +56,9 @@ type PreferencesState = {
   setSidebarCollapsed: (value: boolean) => void;
 
   setLibraryLayout: (value: LibraryLayout) => void;
+  setLibraryStartSection: (value: LibraryStartSection) => void;
+  setShowSearchSuggestions: (value: boolean) => void;
+  setKeepMusicPlaying: (value: boolean) => void;
 
   setEnableTranscoding: (value: boolean) => void;
   setPreferredFormat: (value: PreferredFormat) => void;
@@ -77,6 +84,9 @@ export const usePreferencesStore = create<PreferencesState>()(
       sidebarCollapsed: false,
 
       libraryLayout: "grid",
+      libraryStartSection: "albums",
+      showSearchSuggestions: true,
+      keepMusicPlaying: true,
 
       enableTranscoding: true,
       preferredFormat: "original",
@@ -98,6 +108,9 @@ export const usePreferencesStore = create<PreferencesState>()(
       setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
 
       setLibraryLayout: (value) => set({ libraryLayout: value }),
+      setLibraryStartSection: (value) => set({ libraryStartSection: value }),
+      setShowSearchSuggestions: (value) => set({ showSearchSuggestions: value }),
+      setKeepMusicPlaying: (value) => set({ keepMusicPlaying: value }),
 
       setEnableTranscoding: (value) => set({ enableTranscoding: value }),
       setPreferredFormat: (value) => set({ preferredFormat: value }),
