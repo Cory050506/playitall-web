@@ -206,9 +206,12 @@ export function AudioEngine() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const filterRefs = useRef<BiquadFilterNode[]>([]);
+  const pendingRestoreTimeRef = useRef<number | null>(null);
+  const restoredSongIdRef = useRef<string | null>(null);
 
   const currentSong = usePlaybackStore((s) => s.currentSong);
   const isPlaying = usePlaybackStore((s) => s.isPlaying);
+  const currentTime = usePlaybackStore((s) => s.currentTime);
   const volume = usePlaybackStore((s) => s.volume);
   const setCurrentTime = usePlaybackStore((s) => s.setCurrentTime);
   const setDuration = usePlaybackStore((s) => s.setDuration);
@@ -351,7 +354,28 @@ export function AudioEngine() {
     const audio = audioRef.current;
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime || 0);
-    const onLoadedMetadata = () => setDuration(audio.duration || 0);
+    const onLoadedMetadata = () => {
+      setDuration(audio.duration || 0);
+
+      if (!currentSong) return;
+      if (restoredSongIdRef.current === currentSong.id) return;
+
+      const pendingRestoreTime = pendingRestoreTimeRef.current;
+      if (!pendingRestoreTime || pendingRestoreTime < 1) return;
+
+      const resumeTime = Math.min(
+        Math.max(0, pendingRestoreTime),
+        Math.max(0, (audio.duration || pendingRestoreTime) - 1)
+      );
+
+      if (resumeTime > 0) {
+        audio.currentTime = resumeTime;
+        setCurrentTime(resumeTime);
+      }
+
+      restoredSongIdRef.current = currentSong.id;
+      pendingRestoreTimeRef.current = null;
+    };
     const onEnded = () => {
       void advanceQueue();
     };
@@ -375,7 +399,7 @@ export function AudioEngine() {
         audioRef.current = null;
       }
     };
-  }, [advanceQueue, setCurrentTime, setDuration]);
+  }, [advanceQueue, currentSong, setCurrentTime, setDuration]);
 
   useEffect(() => {
     const castHandler = () => {
@@ -507,6 +531,8 @@ export function AudioEngine() {
     const currentSrc = audio.getAttribute("data-stream-url");
     if (currentSrc === streamUrl) return;
 
+    pendingRestoreTimeRef.current = currentSong?.id ? currentTime : null;
+    restoredSongIdRef.current = null;
     audio.src = streamUrl;
     audio.setAttribute("data-stream-url", streamUrl);
     audio.load();
@@ -514,7 +540,7 @@ export function AudioEngine() {
     if (isPlaying) {
       void audio.play().catch(() => {});
     }
-  }, [streamUrl, isPlaying]);
+  }, [currentSong?.id, currentTime, isPlaying, streamUrl]);
 
   useEffect(() => {
     const audio = audioRef.current;
