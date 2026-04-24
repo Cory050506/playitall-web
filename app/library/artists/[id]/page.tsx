@@ -40,7 +40,10 @@ export default function ArtistDetailPage() {
             <CollectionActionBar
               onPlay={() => setQueue(artistSongs, 0)}
               onShuffle={() =>
-                setQueue([...artistSongs].sort(() => Math.random() - 0.5), 0)
+                setQueue([...artistSongs].sort(() => Math.random() - 0.5), 0, {
+                  originalQueue: artistSongs,
+                  isShuffled: true,
+                })
               }
               onDownload={() =>
                 setStatus("Offline song caching is not available in the web app yet.")

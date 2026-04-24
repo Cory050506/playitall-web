@@ -5,12 +5,17 @@ import { join } from "node:path";
 const { autoUpdater } = updater;
 
 let mainWindow: BrowserWindow | null = null;
+const manualMacUpdates = process.platform === "darwin";
 let updateStatus = {
   state: "idle",
-  message: "Updates are checked automatically.",
+  message: manualMacUpdates
+    ? "This macOS build uses manual updates. Download the latest release from GitHub."
+    : "Updates are checked automatically.",
   version: app.getVersion(),
   availableVersion: null as string | null,
   error: null as string | null,
+  canInstall: !manualMacUpdates,
+  manualOnly: manualMacUpdates,
 };
 
 app.commandLine.appendSwitch("enable-features", "MediaRouter");
@@ -22,13 +27,17 @@ function setUpdateStatus(
     message: string;
     version: string;
     availableVersion: string | null;
-    error: string | null;
+      error: string | null;
+      canInstall: boolean;
+      manualOnly: boolean;
   }>
 ) {
   updateStatus = {
     ...updateStatus,
     ...nextStatus,
     version: app.getVersion(),
+    canInstall: manualMacUpdates ? false : (nextStatus.canInstall ?? updateStatus.canInstall),
+    manualOnly: manualMacUpdates ? true : (nextStatus.manualOnly ?? updateStatus.manualOnly),
   };
 
   for (const window of BrowserWindow.getAllWindows()) {
@@ -42,7 +51,7 @@ function updateErrorMessage(error: unknown) {
 }
 
 function configureAutoUpdater() {
-  if (!app.isPackaged) return;
+  if (!app.isPackaged || manualMacUpdates) return;
 
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
@@ -158,6 +167,18 @@ ipcMain.handle("updates:check", async () => {
     return updateStatus;
   }
 
+  if (manualMacUpdates) {
+    setUpdateStatus({
+      state: "idle",
+      message: "Automatic install is disabled for this unsigned macOS build. Use the GitHub release download below.",
+      availableVersion: null,
+      error: null,
+      canInstall: false,
+      manualOnly: true,
+    });
+    return updateStatus;
+  }
+
   setUpdateStatus({
     state: "checking",
     message: "Checking for updates...",
@@ -178,6 +199,16 @@ ipcMain.handle("updates:check", async () => {
 });
 
 ipcMain.handle("updates:install", () => {
+  if (manualMacUpdates) {
+    setUpdateStatus({
+      state: "idle",
+      message: "Automatic install is disabled for this unsigned macOS build. Use the GitHub release download below.",
+      canInstall: false,
+      manualOnly: true,
+    });
+    return updateStatus;
+  }
+
   if (updateStatus.state !== "downloaded") {
     return updateStatus;
   }

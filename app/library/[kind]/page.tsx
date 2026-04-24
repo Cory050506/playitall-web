@@ -130,10 +130,13 @@ export default function LibraryCollectionPage() {
 
   function playAll(shuffled = false) {
     if (playableSongs.length === 0) return;
-    const queue = shuffled
-      ? [...playableSongs].sort(() => Math.random() - 0.5)
-      : playableSongs;
-    setQueue(queue, 0);
+    if (shuffled) {
+      const queue = [...playableSongs].sort(() => Math.random() - 0.5);
+      setQueue(queue, 0, { originalQueue: playableSongs, isShuffled: true });
+      return;
+    }
+
+    setQueue(playableSongs, 0);
   }
 
   function downloadUnavailable() {

@@ -4,6 +4,18 @@ export function isElectronRuntime() {
   );
 }
 
+export function isLocalhostHost(hostname: string) {
+  return ["localhost", "127.0.0.1", "::1"].includes(hostname);
+}
+
+export function canUseGoogleCastWebSdk() {
+  if (typeof window === "undefined") return false;
+  if (isElectronRuntime()) return false;
+
+  const { protocol, hostname } = window.location;
+  return protocol === "https:" || isLocalhostHost(hostname);
+}
+
 export function getPlatform() {
   if (typeof navigator === "undefined") return "unknown";
 

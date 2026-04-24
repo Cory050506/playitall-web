@@ -14,6 +14,7 @@ import {
   Mic2,
   Pause,
   Play,
+  Shuffle,
   SkipBack,
   SkipForward,
   Volume2,
@@ -27,6 +28,7 @@ import { useDownloadUrl } from "@/lib/subsonic/use-download-url";
 import { useLyrics } from "@/lib/subsonic/queries";
 import { formatDuration } from "@/lib/format";
 import type { LyricsPayload } from "@/lib/lyrics";
+import { useClickAway } from "@/lib/use-click-away";
 
 function dispatchSeek(time: number) {
   window.dispatchEvent(new CustomEvent("play-it-all-seek", { detail: time }));
@@ -36,6 +38,10 @@ const EMPTY_SYNCED_LINES: LyricsPayload["synced"] = [];
 
 function requestCast() {
   window.dispatchEvent(new CustomEvent("play-it-all-cast"));
+}
+
+function requestAdvanceQueue() {
+  window.dispatchEvent(new CustomEvent("play-it-all-next"));
 }
 
 export function NowPlayingModal() {
@@ -53,12 +59,19 @@ export function NowPlayingModal() {
   const volume = usePlaybackStore((s) => s.volume);
   const queue = usePlaybackStore((s) => s.queue);
   const currentIndex = usePlaybackStore((s) => s.currentIndex);
+  const isQueueShuffled = usePlaybackStore((s) => s.isQueueShuffled);
 
   const togglePlayPause = usePlaybackStore((s) => s.togglePlayPause);
   const previous = usePlaybackStore((s) => s.previous);
-  const next = usePlaybackStore((s) => s.next);
   const setVolume = usePlaybackStore((s) => s.setVolume);
   const setIndex = usePlaybackStore((s) => s.setIndex);
+  const toggleQueueShuffle = usePlaybackStore((s) => s.toggleQueueShuffle);
+
+  const overflowRef = useRef<HTMLDivElement | null>(null);
+  const volumeRef = useRef<HTMLDivElement | null>(null);
+
+  useClickAway([overflowRef], isOverflowOpen, () => setIsOverflowOpen(false));
+  useClickAway([volumeRef], isVolumeOpen, () => setIsVolumeOpen(false));
 
   const coverUrl = useCoverArtUrl(currentSong?.coverArt, 900);
   const downloadUrl = useDownloadUrl(currentSong?.id);
@@ -94,7 +107,7 @@ export function NowPlayingModal() {
           transition={{ duration: 0.2, ease: "easeOut" }}
         >
           <div
-            className="absolute inset-0 cursor-pointer bg-black/30 backdrop-blur-xl"
+            className="absolute inset-0 cursor-pointer bg-[rgba(8,8,10,0.38)]"
             onClick={handleClose}
           />
 
@@ -135,7 +148,7 @@ export function NowPlayingModal() {
                   </div>
                 </div>
 
-                <div className="relative">
+                <div className="relative" ref={overflowRef}>
                   <button
                     type="button"
                     onClick={() => setIsOverflowOpen((value) => !value)}
@@ -215,6 +228,8 @@ export function NowPlayingModal() {
                             queue={visibleQueue}
                             currentIndex={currentIndex}
                             setIndex={setIndex}
+                            isQueueShuffled={isQueueShuffled}
+                            onToggleShuffle={toggleQueueShuffle}
                           />
                         )}
                       </div>
@@ -341,13 +356,16 @@ export function NowPlayingModal() {
 
                     <button
                       type="button"
-                      onClick={next}
+                      onClick={requestAdvanceQueue}
                       className="now-playing-skip inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-all duration-200 hover:scale-[1.04] hover:bg-[var(--soft-fill-hover)] active:scale-[0.94]"
                     >
                       <SkipForward size={24} />
                     </button>
 
-                    <div className="now-playing-volume relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-colors duration-200 hover:bg-[var(--soft-fill-hover)]">
+                    <div
+                      ref={volumeRef}
+                      className="now-playing-volume relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--soft-fill)] text-[var(--accent)] transition-colors duration-200 hover:bg-[var(--soft-fill-hover)]"
+                    >
                       <button
                         type="button"
                         onClick={() => setIsVolumeOpen((value) => !value)}
@@ -574,7 +592,7 @@ function LyricsPanel({
           ref={scrollerRef}
           onScroll={handleLyricsScroll}
           className={`scrollbar-subtle -mx-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-2 ${
-            fullscreen ? "gap-4 py-[24dvh] sm:gap-6" : "gap-2 py-8"
+            fullscreen ? "gap-3 py-[18dvh] sm:gap-5 sm:py-[16dvh]" : "gap-2 py-8"
           }`}
         >
           {synced.map((line, index) => {
@@ -596,7 +614,9 @@ function LyricsPanel({
                 }}
                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                 className={`px-3 py-1 text-center leading-snug transition-colors ${
-                  fullscreen ? "text-2xl sm:text-4xl lg:text-5xl" : "text-lg sm:text-xl"
+                  fullscreen
+                    ? "text-[clamp(1.4rem,3.3vh,2.45rem)] sm:text-[clamp(1.6rem,3.5vh,3.1rem)]"
+                    : "text-lg sm:text-xl"
                 } ${
                   isCurrent
                     ? "font-black text-[var(--foreground)]"
@@ -613,7 +633,9 @@ function LyricsPanel({
       ) : lyrics?.plain?.trim() ? (
         <div
           className={`scrollbar-subtle min-h-0 flex-1 overflow-y-auto whitespace-pre-line text-center font-bold leading-relaxed text-[var(--foreground)] ${
-            fullscreen ? "px-2 py-8 text-2xl sm:text-4xl" : "text-lg"
+            fullscreen
+              ? "px-2 py-8 text-[clamp(1.3rem,3vh,2.5rem)] sm:text-[clamp(1.5rem,3.2vh,3rem)]"
+              : "text-lg"
           }`}
         >
           {lyrics.plain}
@@ -631,10 +653,14 @@ function QueuePanel({
   queue,
   currentIndex,
   setIndex,
+  isQueueShuffled,
+  onToggleShuffle,
 }: {
   queue: ReturnType<typeof usePlaybackStore.getState>["queue"];
   currentIndex: number;
   setIndex: (index: number) => void;
+  isQueueShuffled: boolean;
+  onToggleShuffle: () => void;
 }) {
   function handleQueueKeyDown(
     event: KeyboardEvent<HTMLDivElement>,
@@ -655,8 +681,22 @@ function QueuePanel({
             Tap a song to jump ahead.
           </p>
         </div>
-        <div className="rounded-full bg-[var(--soft-fill)] px-3 py-2 text-sm font-bold swift-subtitle">
-          {queue.length}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleShuffle}
+            className={`inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-bold transition ${
+              isQueueShuffled
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--soft-fill)] text-[var(--foreground)] hover:bg-[var(--soft-fill-hover)]"
+            }`}
+          >
+            <Shuffle size={15} />
+            {isQueueShuffled ? "Unshuffle" : "Shuffle"}
+          </button>
+          <div className="rounded-full bg-[var(--soft-fill)] px-3 py-2 text-sm font-bold swift-subtitle">
+            {queue.length}
+          </div>
         </div>
       </div>
 

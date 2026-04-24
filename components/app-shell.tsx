@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/sidebar";
 import { MiniPlayer } from "@/components/player/mini-player";
 import { NowPlayingModal } from "@/components/player/now-playing-modal";
 import { TopControls } from "@/components/top-controls";
+import { UniversalBackButton } from "@/components/universal-back-button";
 import { usePreferencesStore } from "@/stores/preferences-store";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen text-[var(--foreground)]">
       <Sidebar />
       <TopControls />
+      <UniversalBackButton />
 
       <main
         className={cn(

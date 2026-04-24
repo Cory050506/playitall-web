@@ -10,6 +10,7 @@ import { GlassPanel } from "@/components/glass/glass-panel";
 import { TopControls } from "@/components/top-controls";
 import { MiniPlayer } from "@/components/player/mini-player";
 import { NowPlayingModal } from "@/components/player/now-playing-modal";
+import { UniversalBackButton } from "@/components/universal-back-button";
 import { getBrandAssetPath } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 import { usePreferencesStore } from "@/stores/preferences-store";
@@ -101,6 +102,7 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <TopControls />
+      <UniversalBackButton />
 
       <main
         className={cn(

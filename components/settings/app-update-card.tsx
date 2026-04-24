@@ -29,6 +29,8 @@ const DEFAULT_STATUS: UpdateStatus = {
   version: null,
   availableVersion: null,
   error: null,
+  canInstall: true,
+  manualOnly: false,
 };
 
 export function AppUpdateCard() {
@@ -137,7 +139,7 @@ export function AppUpdateCard() {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-              {status.state === "downloaded" ? (
+              {status.state === "downloaded" && status.canInstall !== false ? (
                 <button
                   type="button"
                   onClick={installUpdate}
@@ -147,6 +149,17 @@ export function AppUpdateCard() {
                   Restart
                 </button>
               ) : null}
+              {status.manualOnly && latestRelease ? (
+                <a
+                  href={latestRelease.html_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-10 items-center gap-2 rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-white transition hover:brightness-105"
+                >
+                  <DownloadCloud size={16} />
+                  Download Latest
+                </a>
+              ) : null}
               <button
                 type="button"
                 onClick={checkForUpdates}
@@ -154,7 +167,7 @@ export function AppUpdateCard() {
                 className="inline-flex h-10 items-center gap-2 rounded-full bg-[var(--soft-fill)] px-4 text-sm font-bold text-[var(--foreground)] transition hover:bg-[var(--soft-fill-hover)] disabled:opacity-55"
               >
                 <RefreshCw size={16} className={checking ? "animate-spin" : ""} />
-                Check
+                {status.manualOnly ? "Refresh" : "Check"}
               </button>
             </div>
           </div>

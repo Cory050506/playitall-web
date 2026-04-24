@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Airplay,
   MonitorCog,
@@ -14,6 +14,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { usePreferencesStore } from "@/stores/preferences-store";
 import { EQUALIZER_OPTIONS } from "@/lib/equalizer-presets";
+import { useClickAway } from "@/lib/use-click-away";
 
 function requestCast() {
   window.dispatchEvent(new CustomEvent("play-it-all-cast"));
@@ -21,6 +22,7 @@ function requestCast() {
 
 export function TopControls() {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const mode = usePreferencesStore((s) => s.mode);
   const setMode = usePreferencesStore((s) => s.setMode);
   const equalizerPreset = usePreferencesStore((s) => s.equalizerPreset);
@@ -30,8 +32,13 @@ export function TopControls() {
     setMode(mode === "dark" ? "light" : "dark");
   }
 
+  useClickAway([containerRef], open, () => setOpen(false));
+
   return (
-    <div className="mobile-top-controls fixed right-3 top-3 z-50 flex items-center gap-2">
+    <div
+      ref={containerRef}
+      className="mobile-top-controls fixed right-3 top-3 z-50 flex items-center gap-2"
+    >
       <button
         type="button"
         onClick={requestCast}

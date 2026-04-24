@@ -58,10 +58,10 @@ export function ServerSettingsCard() {
   function logout() {
     clearSession();
     if (isElectronRuntime()) {
-      window.location.hash = "#/login";
+      window.location.assign("/#/login");
       return;
     }
-    window.location.href = "/login";
+    window.location.assign("/login");
   }
 
   return (

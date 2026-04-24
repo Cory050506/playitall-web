@@ -8,13 +8,16 @@ import { useCoverArtUrl } from "@/lib/subsonic/use-cover-art";
 import { usePlayerUiStore } from "@/stores/player-ui-store";
 import { usePreferencesStore } from "@/stores/preferences-store";
 
+function requestAdvanceQueue() {
+  window.dispatchEvent(new CustomEvent("play-it-all-next"));
+}
+
 export function MiniPlayer() {
   const currentSong = usePlaybackStore((s) => s.currentSong);
   const isPlaying = usePlaybackStore((s) => s.isPlaying);
   const currentTime = usePlaybackStore((s) => s.currentTime);
   const duration = usePlaybackStore((s) => s.duration);
   const togglePlayPause = usePlaybackStore((s) => s.togglePlayPause);
-  const next = usePlaybackStore((s) => s.next);
 
   const openNowPlaying = usePlayerUiStore((s) => s.openNowPlaying);
   const waveformMotion = usePreferencesStore((s) => s.waveformMotion);
@@ -107,7 +110,7 @@ export function MiniPlayer() {
 
             <button
               type="button"
-              onClick={next}
+              onClick={requestAdvanceQueue}
               className="hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-all duration-200 hover:scale-[1.04] active:scale-[0.94] sm:inline-flex"
             >
               <SkipForward size={18} />

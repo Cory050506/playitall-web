@@ -8,7 +8,11 @@ import { useSessionStore } from "@/stores/session-store";
 import { useCoverArtUrl } from "@/lib/subsonic/use-cover-art";
 import { useDirectStreamUrl } from "@/lib/subsonic/use-direct-stream-url";
 import { useStreamUrl } from "@/lib/subsonic/use-stream-url";
-import { getPlatform, isElectronRuntime } from "@/lib/runtime";
+import {
+  canUseGoogleCastWebSdk,
+  getPlatform,
+  isElectronRuntime,
+} from "@/lib/runtime";
 import { SubsonicClient } from "@/lib/subsonic/client";
 import {
   librarySnapshotKey,
@@ -133,6 +137,10 @@ function setMediaSessionAction(
   }
 }
 
+function requestAdvanceQueue() {
+  window.dispatchEvent(new CustomEvent("play-it-all-next"));
+}
+
 async function getAutoplaySongs(currentSong: Song, queue: Song[]) {
   const session = useSessionStore.getState();
   const queueIds = new Set(queue.map((song) => song.id));
@@ -210,6 +218,45 @@ export function AudioEngine() {
   const directStreamUrl = useDirectStreamUrl(currentSong?.id);
   const castCoverArtUrl = useCoverArtUrl(currentSong?.coverArt, 800);
 
+  const advanceQueue = useCallback(async () => {
+    const state = usePlaybackStore.getState();
+    const song = state.currentSong;
+    const atEnd = state.currentIndex >= state.queue.length - 1;
+
+    if (!song || !atEnd) {
+      state.next();
+      return;
+    }
+
+    if (!usePreferencesStore.getState().keepMusicPlaying) {
+      state.pause();
+      return;
+    }
+
+    const additions = await getAutoplaySongs(song, state.queue);
+    if (additions.length) {
+      const uniqueAdditions = additions.filter(
+        (candidate) => !state.queue.some((queued) => queued.id === candidate.id)
+      );
+
+      if (uniqueAdditions.length) {
+        const nextQueue = [...state.queue, ...uniqueAdditions];
+        const nextOriginalQueue = state.isQueueShuffled
+          ? [...state.originalQueue, ...uniqueAdditions]
+          : nextQueue;
+
+        usePlaybackStore.getState().setQueue(nextQueue, state.currentIndex + 1, {
+          originalQueue: nextOriginalQueue,
+          isShuffled: state.isQueueShuffled,
+        });
+        toast.success("Added related songs to keep the music going.");
+        return;
+      }
+    }
+
+    state.pause();
+  }, []);
+
   useEffect(() => {
     if (!currentSong) {
       document.title = "Play It All";
@@ -245,7 +292,7 @@ export function AudioEngine() {
         usePlaybackStore.getState().previous();
       });
       setMediaSessionAction("nexttrack", () => {
-        usePlaybackStore.getState().next();
+        requestAdvanceQueue();
       });
     }
   }, [castCoverArtUrl, currentSong]);
@@ -306,31 +353,7 @@ export function AudioEngine() {
     const onTimeUpdate = () => setCurrentTime(audio.currentTime || 0);
     const onLoadedMetadata = () => setDuration(audio.duration || 0);
     const onEnded = () => {
-      void (async () => {
-        const state = usePlaybackStore.getState();
-        const song = state.currentSong;
-        const atEnd = state.currentIndex >= state.queue.length - 1;
-
-        if (!song || !atEnd) {
-          state.next();
-          return;
-        }
-
-        if (!usePreferencesStore.getState().keepMusicPlaying) {
-          state.pause();
-          return;
-        }
-
-        const additions = await getAutoplaySongs(song, state.queue);
-        if (additions.length) {
-          usePlaybackStore.getState().appendToQueue(additions);
-          usePlaybackStore.getState().next();
-          toast.success("Added related songs to keep the music going.");
-          return;
-        }
-
-        usePlaybackStore.getState().pause();
-      })();
+      void advanceQueue();
     };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
@@ -341,8 +364,18 @@ export function AudioEngine() {
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
       audio.removeEventListener("ended", onEnded);
+
+      // StrictMode can mount/unmount/mount in development. Tear the media element
+      // down fully so we don't leave a ghost audio instance playing underneath.
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+
+      if (audioRef.current === audio) {
+        audioRef.current = null;
+      }
     };
-  }, [setCurrentTime, setDuration]);
+  }, [advanceQueue, setCurrentTime, setDuration]);
 
   useEffect(() => {
     const castHandler = () => {
@@ -365,7 +398,9 @@ export function AudioEngine() {
           return;
         }
 
-        const googleCast = await getGoogleCastSupport();
+        const googleCast = canUseGoogleCastWebSdk()
+          ? await getGoogleCastSupport()
+          : null;
 
         if (googleCast) {
           const { castContext, mediaNamespace, MediaInfo, LoadRequest } = googleCast;
@@ -513,6 +548,18 @@ export function AudioEngine() {
       window.removeEventListener("play-it-all-seek", seekHandler as EventListener);
     };
   }, [setCurrentTime]);
+
+  useEffect(() => {
+    const nextHandler = () => {
+      void advanceQueue();
+    };
+
+    window.addEventListener("play-it-all-next", nextHandler);
+
+    return () => {
+      window.removeEventListener("play-it-all-next", nextHandler);
+    };
+  }, [advanceQueue]);
 
   return null;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { canUseGoogleCastWebSdk } from "@/lib/runtime";
 
 declare global {
   interface Window {
@@ -41,6 +42,10 @@ const CAST_SDK_SRC =
 
 export function CastProvider() {
   useEffect(() => {
+    if (!canUseGoogleCastWebSdk()) {
+      return;
+    }
+
     window.__onGCastApiAvailable = (isAvailable) => {
       if (!isAvailable) return;
 
@@ -61,6 +66,10 @@ export function CastProvider() {
     script.src = CAST_SDK_SRC;
     script.async = true;
     document.head.appendChild(script);
+
+    return () => {
+      delete window.__onGCastApiAvailable;
+    };
   }, []);
 
   return null;

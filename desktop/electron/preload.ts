@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld("playItAllElectron", {
       version?: string | null;
       availableVersion?: string | null;
       error?: string | null;
+      canInstall?: boolean;
+      manualOnly?: boolean;
     }) => void
   ) => {
     const listener = (_event: unknown, status: unknown) => callback(status as never);
