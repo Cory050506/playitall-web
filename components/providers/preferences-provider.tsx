@@ -11,10 +11,10 @@ const accentMap: Record<string, string> = {
 };
 
 const textSizeMap = {
-  small: "15px",
+  small: "14px",
   medium: "16px",
-  large: "17px",
-  "extra-large": "18px",
+  large: "18px",
+  "extra-large": "20px",
 };
 
 export function PreferencesProvider() {

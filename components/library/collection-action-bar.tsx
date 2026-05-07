@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, Play, Shuffle } from "lucide-react";
+import { isElectronRuntime } from "@/lib/runtime";
 
 type CollectionActionBarProps = {
   onPlay: () => void;
@@ -17,6 +18,9 @@ export function CollectionActionBar({
   disabled = false,
   downloadDisabled = false,
 }: CollectionActionBarProps) {
+  const supportsOfflineDownloads =
+    typeof window !== "undefined" && isElectronRuntime();
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:flex">
       <button
@@ -37,7 +41,7 @@ export function CollectionActionBar({
         <Shuffle size={17} />
         Shuffle
       </button>
-      {onDownload ? (
+      {onDownload && supportsOfflineDownloads ? (
         <button
           type="button"
           onClick={onDownload}

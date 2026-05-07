@@ -399,7 +399,7 @@ body::before {
 
 @media (max-width: 767px) {
   html {
-    font-size: min(var(--app-text-size, 16px), 16px);
+    font-size: var(--app-text-size, 16px);
   }
 
   .now-playing-card {
@@ -411,14 +411,15 @@ body::before {
   }
 
   .now-playing-art {
-    max-width: min(250px, 27dvh) !important;
+    max-width: min(288px, 31dvh) !important;
   }
 
   .now-playing-meta {
-    margin-top: 1.15rem !important;
+    margin-top: 0.95rem !important;
   }
 
   .now-playing-bottom {
+    margin-top: 1.1rem !important;
     padding-top: 1.2rem !important;
   }
 
@@ -427,7 +428,7 @@ body::before {
   }
 
   .now-playing-controls {
-    margin-top: 1rem !important;
+    margin-top: 0.85rem !important;
     padding-bottom: 0.15rem;
   }
 }

@@ -15,6 +15,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { useLibraryStats } from "@/lib/subsonic/queries";
 import { formatCount } from "@/lib/format";
+import { isElectronRuntime } from "@/lib/runtime";
 import { usePreferencesStore } from "@/stores/preferences-store";
 import { useSessionStore } from "@/stores/session-store";
 import {
@@ -37,6 +38,7 @@ export default function LibraryPage() {
   const libraryStartSection = usePreferencesStore((s) => s.libraryStartSection);
   const serverUrl = useSessionStore((s) => s.serverUrl);
   const username = useSessionStore((s) => s.username);
+  const supportsOffline = typeof window !== "undefined" && isElectronRuntime();
 
   function refreshLibrary() {
     if (serverUrl && username) {
@@ -81,14 +83,16 @@ export default function LibraryPage() {
       subtitle: "Saved playlists",
       count: formatCount(data?.playlistCount),
     },
-    {
+  ];
+  if (supportsOffline) {
+    items.push({
       href: "/library/downloads",
       icon: <Download size={20} />,
       title: "Downloads",
       subtitle: "Offline music",
       count: formatCount(data?.downloadCount),
-    },
-  ];
+    });
+  }
   const prioritizedItems = [
     ...items.filter((item) => item.href === `/library/${libraryStartSection}`),
     ...items.filter((item) => item.href !== `/library/${libraryStartSection}`),

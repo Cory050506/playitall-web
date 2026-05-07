@@ -6,11 +6,13 @@ import { GlassPanel } from "@/components/glass/glass-panel";
 import { SettingsRow } from "@/components/ui/settings-row";
 import { ServerSettingsCard } from "@/components/settings/server-settings-card";
 import { AppUpdateCard } from "@/components/settings/app-update-card";
+import { isElectronRuntime } from "@/lib/runtime";
 import { useSessionStore } from "@/stores/session-store";
 
 export default function SettingsPage() {
   const serverUrl = useSessionStore((s) => s.serverUrl);
   const username = useSessionStore((s) => s.username);
+  const supportsOffline = typeof window !== "undefined" && isElectronRuntime();
 
   return (
     <AppShell>
@@ -22,17 +24,19 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <GlassPanel className="overflow-hidden rounded-[28px]">
             <Link href="/settings/appearance">
-              <SettingsRow title="Appearance" />
+              <SettingsRow title="Appearance" subtitle="Theme, text size, cards, and artwork" />
             </Link>
             <Link href="/settings/library">
-              <SettingsRow title="Library" />
+              <SettingsRow title="Library" subtitle="Layout, start section, search, and playback behavior" />
             </Link>
             <Link href="/settings/quality">
               <SettingsRow title="Quality" />
             </Link>
-            <Link href="/settings/offline">
-              <SettingsRow title="Offline Listening" />
-            </Link>
+            {supportsOffline ? (
+              <Link href="/settings/offline">
+                <SettingsRow title="Offline Listening" />
+              </Link>
+            ) : null}
           </GlassPanel>
 
           <ServerSettingsCard />

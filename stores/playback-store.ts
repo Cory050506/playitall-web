@@ -7,6 +7,7 @@ import type { Song } from "@/lib/subsonic/types";
 type PlaybackState = {
   queue: Song[];
   originalQueue: Song[];
+  recentHistory: Song[];
   currentIndex: number;
   currentSong: Song | null;
   isQueueShuffled: boolean;
@@ -47,11 +48,18 @@ function shuffleSongs(songs: Song[]) {
   return shuffled;
 }
 
+function rememberRecentSong(history: Song[], song: Song | null) {
+  if (!song) return history;
+  const next = [song, ...history.filter((item) => item.id !== song.id)];
+  return next.slice(0, 24);
+}
+
 export const usePlaybackStore = create<PlaybackState>()(
   persist(
     (set, get) => ({
       queue: [],
       originalQueue: [],
+      recentHistory: [],
       currentIndex: -1,
       currentSong: null,
       isQueueShuffled: false,
@@ -68,6 +76,7 @@ export const usePlaybackStore = create<PlaybackState>()(
         set({
           queue: songs,
           originalQueue: options?.originalQueue ?? songs,
+          recentHistory: safeIndex >= 0 ? rememberRecentSong(get().recentHistory, songs[safeIndex]) : get().recentHistory,
           currentIndex: safeIndex,
           currentSong: safeIndex >= 0 ? songs[safeIndex] : null,
           isQueueShuffled: options?.isShuffled ?? false,
@@ -83,6 +92,7 @@ export const usePlaybackStore = create<PlaybackState>()(
           set({
             queue,
             originalQueue: queue,
+            recentHistory: rememberRecentSong(get().recentHistory, song),
             currentIndex: index >= 0 ? index : 0,
             currentSong: song,
             isQueueShuffled: false,
@@ -96,6 +106,7 @@ export const usePlaybackStore = create<PlaybackState>()(
         set({
           queue: [song],
           originalQueue: [song],
+          recentHistory: rememberRecentSong(get().recentHistory, song),
           currentIndex: 0,
           currentSong: song,
           isQueueShuffled: false,
@@ -117,6 +128,7 @@ export const usePlaybackStore = create<PlaybackState>()(
         if (nextIndex >= queue.length) return;
 
         set({
+          recentHistory: rememberRecentSong(get().recentHistory, queue[nextIndex]),
           currentIndex: nextIndex,
           currentSong: queue[nextIndex],
           currentTime: 0,
@@ -141,6 +153,7 @@ export const usePlaybackStore = create<PlaybackState>()(
         }
 
         set({
+          recentHistory: rememberRecentSong(get().recentHistory, queue[prevIndex]),
           currentIndex: prevIndex,
           currentSong: queue[prevIndex],
           currentTime: 0,
@@ -149,7 +162,11 @@ export const usePlaybackStore = create<PlaybackState>()(
         });
       },
 
-      setCurrentTime: (time) => set({ currentTime: time }),
+      setCurrentTime: (time) =>
+        set((state) => {
+          const nextTime = Math.max(0, Math.floor(time));
+          return state.currentTime === nextTime ? state : { currentTime: nextTime };
+        }),
       setDuration: (duration) => set({ duration }),
       setVolume: (volume) => set({ volume }),
       setIndex: (index) => {
@@ -157,6 +174,7 @@ export const usePlaybackStore = create<PlaybackState>()(
         if (index < 0 || index >= queue.length) return;
 
         set({
+          recentHistory: rememberRecentSong(get().recentHistory, queue[index]),
           currentIndex: index,
           currentSong: queue[index],
           currentTime: 0,
@@ -230,6 +248,7 @@ export const usePlaybackStore = create<PlaybackState>()(
       partialize: (state) => ({
         queue: state.queue,
         originalQueue: state.originalQueue,
+        recentHistory: state.recentHistory,
         currentIndex: state.currentIndex,
         currentSong: state.currentSong,
         isQueueShuffled: state.isQueueShuffled,

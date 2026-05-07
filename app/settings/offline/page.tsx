@@ -7,10 +7,12 @@ import { SettingSelectRow } from "@/components/settings/setting-select-row";
 import { SettingSliderRow } from "@/components/settings/setting-slider-row";
 import { SettingToggleRow } from "@/components/settings/setting-toggle-row";
 import { SettingNoteCard } from "@/components/settings/setting-note-card";
+import { isElectronRuntime } from "@/lib/runtime";
 import { usePreferencesStore } from "@/stores/preferences-store";
 
 export default function OfflineSettingsPage() {
   const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const supportsOffline = typeof window !== "undefined" && isElectronRuntime();
   const {
     enableOfflineDownloads,
     offlineSaveAs,
@@ -23,6 +25,16 @@ export default function OfflineSettingsPage() {
     setAllowDownloadsOverCellular,
     setOfflineCacheGB,
   } = usePreferencesStore();
+
+  if (!supportsOffline) {
+    return (
+      <SettingsShell title="Offline Listening">
+        <SettingNoteCard>
+          Offline downloads are only available in the desktop app right now.
+        </SettingNoteCard>
+      </SettingsShell>
+    );
+  }
 
   return (
     <SettingsShell title="Offline Listening">

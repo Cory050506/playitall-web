@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SubsonicClient } from "@/lib/subsonic/client";
 import {
@@ -94,15 +95,17 @@ function useClient() {
   const username = useSessionStore((s) => s.username);
   const password = useSessionStore((s) => s.password);
 
-  if (!serverUrl || !username || !password) {
-    return null;
-  }
+  return useMemo(() => {
+    if (!serverUrl || !username || !password) {
+      return null;
+    }
 
-  return new SubsonicClient({
-    serverUrl,
-    username,
-    password,
-  });
+    return new SubsonicClient({
+      serverUrl,
+      username,
+      password,
+    });
+  }, [password, serverUrl, username]);
 }
 
 export function useNewestAlbums() {
@@ -110,6 +113,7 @@ export function useNewestAlbums() {
 
   return useQuery({
     queryKey: ["subsonic", "albums", "newest"],
+    staleTime: LIBRARY_STALE_TIME,
     enabled: !!client,
     queryFn: async () => {
       if (!client) throw new Error("No client");
@@ -180,6 +184,7 @@ export function useAlbum(id?: string) {
 
   return useQuery({
     queryKey: ["subsonic", "album", id],
+    staleTime: LIBRARY_STALE_TIME,
     enabled: !!client && !!id,
     queryFn: async () => {
       if (!client || !id) throw new Error("No album");
@@ -194,6 +199,7 @@ export function useArtist(id?: string) {
 
   return useQuery({
     queryKey: ["subsonic", "artist", id],
+    staleTime: LIBRARY_STALE_TIME,
     enabled: !!client && !!id,
     queryFn: async () => {
       if (!client || !id) throw new Error("No artist");
@@ -208,6 +214,7 @@ export function useRandomSongs() {
 
   return useQuery({
     queryKey: ["subsonic", "songs", "random"],
+    staleTime: 5 * 60 * 1000,
     enabled: !!client,
     queryFn: async () => {
       if (!client) throw new Error("No client");
@@ -222,6 +229,7 @@ export function usePlaylists(enabled = true) {
 
   return useQuery({
     queryKey: ["subsonic", "playlists"],
+    staleTime: LIBRARY_STALE_TIME,
     enabled: enabled && !!client,
     queryFn: async () => {
       if (!client) throw new Error("No client");
@@ -236,6 +244,7 @@ export function usePlaylist(id?: string) {
 
   return useQuery({
     queryKey: ["subsonic", "playlist", id],
+    staleTime: LIBRARY_STALE_TIME,
     enabled: !!client && !!id,
     queryFn: async () => {
       if (!client || !id) throw new Error("No playlist");
@@ -250,6 +259,7 @@ export function useGenres(enabled = true) {
 
   return useQuery({
     queryKey: ["subsonic", "genres"],
+    staleTime: LIBRARY_STALE_TIME,
     enabled: enabled && !!client,
     queryFn: async () => {
       if (!client) throw new Error("No client");
@@ -278,6 +288,7 @@ export function useArtistIndexes(enabled = true) {
 
   return useQuery({
     queryKey: ["subsonic", "artist-indexes"],
+    staleTime: LIBRARY_STALE_TIME,
     enabled: enabled && !!client,
     queryFn: async () => {
       if (!client) throw new Error("No client");

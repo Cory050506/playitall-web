@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search as SearchIcon } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -8,39 +8,67 @@ import { GlassPanel } from "@/components/glass/glass-panel";
 import { SearchSuggestionRow } from "@/components/ui/search-suggestion-row";
 import { RecentSongRow } from "@/components/ui/recent-song-row";
 import { AlbumCard } from "@/components/home/album-card";
-import { useRandomSongs, useSearch } from "@/lib/subsonic/queries";
+import { useLibraryCatalog, useSearch } from "@/lib/subsonic/queries";
 import { formatDuration } from "@/lib/format";
 import { usePreferencesStore } from "@/stores/preferences-store";
+import { usePlaybackStore } from "@/stores/playback-store";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-
-  const trimmed = query.trim();
+  const deferredQuery = useDeferredValue(query);
+  const trimmed = deferredQuery.trim();
   const searching = trimmed.length > 0;
   const showSearchSuggestions = usePreferencesStore((s) => s.showSearchSuggestions);
+  const recentHistory = usePlaybackStore((s) => s.recentHistory);
 
-  const { data: randomSongs = [] } = useRandomSongs();
+  const { data: catalog } = useLibraryCatalog();
   const { data: results, isLoading, error } = useSearch(trimmed);
 
-  const recentSongs = useMemo(() => randomSongs.slice(0, 8), [randomSongs]);
+  const recentSongs = useMemo(() => recentHistory.slice(0, 8), [recentHistory]);
   const suggestions = useMemo(() => {
-    const unique = new Map<string, string>();
+    if (!catalog) return [];
 
-    for (const song of randomSongs) {
-      if (song.artist && !unique.has(song.artist.toLowerCase())) {
-        unique.set(song.artist.toLowerCase(), song.artist);
-      }
-      if (song.album && !unique.has(song.album.toLowerCase())) {
-        unique.set(song.album.toLowerCase(), song.album);
-      }
-      if (!unique.has(song.title.toLowerCase())) {
-        unique.set(song.title.toLowerCase(), song.title);
-      }
-      if (unique.size >= 4) break;
+    const picks: string[] = [];
+    const usedArtists = new Set<string>();
+    const usedLabels = new Set<string>();
+
+    const addPick = (label?: string | null, artist?: string | null) => {
+      const normalized = label?.trim().toLowerCase();
+      if (!label || !normalized || usedLabels.has(normalized)) return false;
+      picks.push(label);
+      usedLabels.add(normalized);
+      if (artist) usedArtists.add(artist.trim().toLowerCase());
+      return true;
+    };
+
+    for (const song of catalog.songs) {
+      if (song.artist && addPick(song.artist, song.artist)) break;
     }
 
-    return [...unique.values()].slice(0, 4);
-  }, [randomSongs]);
+    for (const album of catalog.albums) {
+      const albumArtist = album.artist?.trim().toLowerCase();
+      if (albumArtist && usedArtists.has(albumArtist)) continue;
+      if (addPick(album.name, album.artist)) break;
+    }
+
+    for (const song of catalog.songs) {
+      const songArtist = song.artist?.trim().toLowerCase();
+      if (songArtist && usedArtists.has(songArtist)) continue;
+      if (addPick(song.title, song.artist)) break;
+    }
+
+    for (const album of catalog.albums) {
+      if (picks.length >= 4) break;
+      addPick(album.name, album.artist);
+    }
+
+    for (const song of catalog.songs) {
+      if (picks.length >= 4) break;
+      addPick(song.title, song.artist);
+    }
+
+    return picks.slice(0, 4);
+  }, [catalog]);
 
   return (
     <AppShell>
@@ -99,14 +127,20 @@ export default function SearchPage() {
               <div className="mb-3 text-xl font-semibold text-[var(--foreground)]">Recent Songs</div>
 
               <GlassPanel className="overflow-hidden rounded-[28px]">
-                {recentSongs.map((song) => (
-                  <RecentSongRow
-                    key={song.id}
-                    song={song}
-                    queue={recentSongs}
-                    duration={formatDuration(song.duration)}
-                  />
-                ))}
+                {recentSongs.length ? (
+                  recentSongs.map((song) => (
+                    <RecentSongRow
+                      key={song.id}
+                      song={song}
+                      queue={recentSongs}
+                      duration={formatDuration(song.duration)}
+                    />
+                  ))
+                ) : (
+                  <div className="px-4 py-4 swift-subtitle">
+                    Start playing songs and they’ll show up here.
+                  </div>
+                )}
               </GlassPanel>
             </section>
           </>
